@@ -1,0 +1,6 @@
+.vscode/
+*.exe
+*.o
+*.od
+.DS_Store
+*.txt
