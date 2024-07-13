@@ -1933,7 +1933,7 @@ lbool Solver::solve_()
     int init = 10000;
     while (status == l_Undef && init > 0 /*&& withinBudget()*/&& !isTimeOut())
         status = search(init);
-    VSIDS = true;
+    VSIDS = false;
     
     // Search:
     int curr_restarts = 0;
