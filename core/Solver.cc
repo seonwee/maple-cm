@@ -1931,13 +1931,13 @@ lbool Solver::solve_()
     
     VSIDS = true;
     int init = 10000;
-    while (status == l_Undef && init > 0 /*&& withinBudget()*/)
+    while (status == l_Undef && init > 0 /*&& withinBudget()*/&& !isTimeOut())
         status = search(init);
     VSIDS = false;
     
     // Search:
     int curr_restarts = 0;
-    while (status == l_Undef /*&& withinBudget()*/){
+    while (status == l_Undef /*&& withinBudget()*/&& !isTimeOut()){
         if (VSIDS){
             int weighted = INT32_MAX;
             status = search(weighted);

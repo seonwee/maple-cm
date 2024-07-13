@@ -150,9 +150,11 @@ int main(int argc, char** argv)
             rlimit rl;
             getrlimit(RLIMIT_CPU, &rl);
             if (rl.rlim_max == RLIM_INFINITY || (rlim_t)cpu_lim < rl.rlim_max){
-                rl.rlim_cur = cpu_lim;
+                rl.rlim_cur = (rlim_t)cpu_lim;
                 if (setrlimit(RLIMIT_CPU, &rl) == -1)
                     printf("c WARNING! Could not set resource limit: CPU-time.\n");
+                else
+                    printf("c set resource limit: CPU-time successfully.\n");
             } }
 
         // Set limit on virtual memory:

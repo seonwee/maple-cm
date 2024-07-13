@@ -339,7 +339,7 @@ protected:
     int      level            (Var x) const;
     double   progressEstimate ()      const; // DELETE THIS ?? IT'S NOT VERY USEFUL ...
     bool     withinBudget     ()      const;
-
+    bool     isTimeOut        ()      const;
     template<class V> int computeLBD(const V& c) {
         int lbd = 0;
 
@@ -525,7 +525,9 @@ inline bool     Solver::withinBudget() const {
     return !asynch_interrupt &&
            (conflict_budget    < 0 || conflicts < (uint64_t)conflict_budget) &&
            (propagation_budget < 0 || propagations < (uint64_t)propagation_budget); }
-
+inline bool     Solver::isTimeOut() const{
+    return asynch_interrupt;
+}
 // FIXME: after the introduction of asynchronous interrruptions the solve-versions that return a
 // pure bool do not give a safe interface. Either interrupts must be possible to turn off here, or
 // all calls to solve must return an 'lbool'. I'm not yet sure which I prefer.
