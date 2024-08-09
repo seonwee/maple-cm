@@ -198,11 +198,11 @@ public:
                 conflicts_VSIDS;//VSIDS策略下的冲突次数
     uint64_t dec_vars, clauses_literals, learnts_literals, max_literals, tot_literals;
 
-    vec<uint32_t> picked;
-    vec<uint32_t> conflicted;
-    vec<uint32_t> almost_conflicted;
+    vec<uint32_t> picked; //Assigned_v 记录变元被赋值时历史冲突的次数
+    vec<uint32_t> conflicted; //记录跟变元v从赋值到赋值取消这段时间内参与生成学习子句的数量
+    vec<uint32_t> almost_conflicted; //RSR
 #ifdef ANTI_EXPLORATION
-    vec<uint32_t> canceled;
+    vec<uint32_t> canceled; //
 #endif
 
 protected:

@@ -1054,7 +1054,6 @@ void Solver::cancelUntil(int level) {
     if (decisionLevel() > level){
         for (int c = trail.size()-1; c >= trail_lim[level]; c--){
             Var      x  = var(trail[c]);
-            
             if (!VSIDS){
                 uint32_t age = conflicts - picked[x];
                 if (age > 0){
@@ -1071,8 +1070,7 @@ void Solver::cancelUntil(int level) {
 #ifdef ANTI_EXPLORATION
                 canceled[x] = conflicts;
 #endif
-            }
-            
+            }            
             assigns [x] = l_Undef;
             if (phase_saving > 1 || (phase_saving == 1) && c > trail_lim.last())
                 polarity[x] = sign(trail[c]);
@@ -1929,10 +1927,10 @@ lbool Solver::solve_()
         return l_False;
     }
     
-    VSIDS = true;
-    int init = 10000;
-    while (status == l_Undef && init > 0 /*&& withinBudget()*/&& !isTimeOut())
-        status = search(init);
+    // VSIDS = true;
+    // int init = 10000;
+    // while (status == l_Undef && init > 0 /*&& withinBudget()*/&& !isTimeOut())
+    //     status = search(init);
     VSIDS = false;
     
     // Search:

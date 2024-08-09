@@ -4,4 +4,5 @@
 *.od
 .DS_Store
 *.txt
-/simp/glucose
+*/glucose
+script.sh
