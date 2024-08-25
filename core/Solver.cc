@@ -1965,7 +1965,6 @@ lbool Solver::solve_()
 #endif
         return l_False;
     }
-    return l_Undef;    
 
     //--------------------difference--------------------
 
@@ -1987,10 +1986,9 @@ lbool Solver::solve_()
         VSIDS = false;
     }
     int changeBranchStep = 0;
-    bool first = true;
     double p;
     //--------------------difference--------------------
-
+    printf("c It will be possible to change the branching strategy.\n");
     // Search:
     int curr_restarts = 0;
     while (status == l_Undef /*&& withinBudget()*/&& !isTimeOut()){
@@ -2002,11 +2000,8 @@ lbool Solver::solve_()
             curr_restarts++;
             status = search(nof_conflicts);
         }
-        if((diff_learnt_ratio_list.size() >= window_size && simplifyCount > changeBranchGap) || 
-        (diff_learnt_ratio_list.size() >= window_size && first)){
-            if(!first)
-                simplifyCount = 0;
-            first = false;
+        if(diff_learnt_ratio_list.size() >= window_size && simplifyCount > changeBranchGap){
+            simplifyCount = 0;
             double s = 0;
             for(int i=diff_learnt_ratio_list.size()-window_size;i<diff_learnt_ratio_list.size();i++){
                 s += diff_learnt_ratio_list[i];
