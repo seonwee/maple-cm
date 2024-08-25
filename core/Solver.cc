@@ -155,6 +155,11 @@ Solver::Solver() :
   , curSimplify(1)
   , nbconfbeforesimplify(1000)
   , incSimplify(1000)
+
+
+  //difference
+  , origin_ratio(0)
+  , learnt_ratio(0)
 {}
 
 
@@ -699,13 +704,24 @@ bool Solver::simplifyAll()
             0 : 
             (learnt_original_length_record - learnt_simplified_length_record) * 100 / 
             (double)learnt_original_length_record);
-
+    learnt_ratio = learnt_original_length_record == 0 ? 
+            0 : 
+            (learnt_original_length_record - learnt_simplified_length_record) * 100 / 
+            (double)learnt_original_length_record;
     printf("c origin size_reduce_ratio     : %4.2f%%\n",
             origin_original_length_record == 0 ? 
             0 : 
             (origin_original_length_record - origin_simplified_length_record) * 100 / 
             (double)origin_original_length_record);
+    origin_ratio = origin_original_length_record == 0 ? 
+            0 : 
+            (origin_original_length_record - origin_simplified_length_record) * 100 / 
+            (double)origin_original_length_record;
     //printf("%u %u\n",origin_original_length_record,origin_simplified_length_record);
+    learnt_ratio_list.push(learnt_ratio);
+    if(learnt_ratio_list.size()>1){
+        diff_learnt_ratio_list.push(learnt_ratio_list.last()-learnt_ratio_list[learnt_ratio_list.size()-2]);
+    }
     return true;
 }
 
@@ -893,11 +909,16 @@ bool Solver::simplifyOriginalClauses() {
 //           nbOriginalClauses_before, clauses.size(), nbShortening, nbShortened, avg);
 //    printf("c Original clause minimization time: %5.2lfs, number UPs: %llu\n",
 //           cpuTime() - begin_simp_time, s_propagations);
+    
     printf("c origin size_reduce_ratio     : %4.2f%%\n",
             origin_original_length_record == 0 ? 
             0 : 
             (origin_original_length_record - origin_simplified_length_record) * 100 / 
             (double)origin_original_length_record);
+
+    origin_ratio = origin_original_length_record == 0 ? 0 : 
+            (origin_original_length_record - origin_simplified_length_record) * 100 / 
+            (double)origin_original_length_record;
     return true;
 }
 
@@ -1696,6 +1717,7 @@ lbool Solver::search(int& nof_conflicts)
     //
     if (conflicts >= curSimplify * nbconfbeforesimplify){
         nbSimplifyAll++;
+        simplifyCount++;
 //        printf("c ### simplifyAll %llu on conflict : %lld and restart: %lld\n",  nbSimplifyAll, conflicts, starts);
         if (!simplifyAll()){
             return l_False;
@@ -1892,7 +1914,20 @@ void sleep(int time)
 static void SIGALRM_switch(int signum) { switch_mode = true; }
 #endif
 
-
+void Solver::changeBranch(){
+    if(VSIDS==false){
+        printf("c Switched to VSIDS.\n");
+        //fflush(stdout);
+        picked.clear();
+        conflicted.clear();
+        almost_conflicted.clear();
+#ifdef ANTI_EXPLORATION
+        canceled.clear();
+#endif
+    }
+    printf("c Switched to LRB.\n");
+    VSIDS = !VSIDS;        
+}
 // NOTE: assumptions passed in member-variable 'assumptions'.
 lbool Solver::solve_()
 {
@@ -1900,8 +1935,8 @@ lbool Solver::solve_()
         std::thread t(sleep, 2500);
         t.detach();
     #else
-        signal(SIGALRM, SIGALRM_switch);
-        alarm(2500);//2500
+        // signal(SIGALRM, SIGALRM_switch);
+        // alarm(2500);//2500
     #endif
     
     model.clear(); usedClauses.clear();
@@ -1930,13 +1965,32 @@ lbool Solver::solve_()
 #endif
         return l_False;
     }
-    return l_Undef;
-    // VSIDS = false;
-    // int init = 10000;
-    // while (status == l_Undef && init > 0 /*&& withinBudget()*/&& !isTimeOut())
-    //     status = search(init);
-    VSIDS = false;
+    return l_Undef;    
+
+    //--------------------difference--------------------
+
+    //--------------------difference--------------------
+
+    //--------------------difference--------------------
+    double first_origin_ratio = origin_ratio;
+    learnt_ratio_list.capacity(1000);
+    diff_learnt_ratio_list.capacity(1000);
+    //--------------------difference--------------------
+    VSIDS = true;
+    int init = 10000;
+    while (status == l_Undef && init > 0 /*&& withinBudget()*/&& !isTimeOut())
+        status = search(init);
     
+    
+    //--------------------difference--------------------
+    if(first_origin_ratio<=0.25){
+        VSIDS = false;
+    }
+    int changeBranchStep = 0;
+    bool first = true;
+    double p;
+    //--------------------difference--------------------
+
     // Search:
     int curr_restarts = 0;
     while (status == l_Undef /*&& withinBudget()*/&& !isTimeOut()){
@@ -1948,17 +2002,42 @@ lbool Solver::solve_()
             curr_restarts++;
             status = search(nof_conflicts);
         }
-        if (!VSIDS && switch_mode){
-            VSIDS = true;
-            printf("c Switched to VSIDS.\n");
-            fflush(stdout);
-            picked.clear();
-            conflicted.clear();
-            almost_conflicted.clear();
-#ifdef ANTI_EXPLORATION
-            canceled.clear();
-#endif
-        }
+        if((diff_learnt_ratio_list.size() >= window_size && simplifyCount > changeBranchGap) || 
+        (diff_learnt_ratio_list.size() >= window_size && first)){
+            if(!first)
+                simplifyCount = 0;
+            first = false;
+            double s = 0;
+            for(int i=diff_learnt_ratio_list.size()-window_size;i<diff_learnt_ratio_list.size();i++){
+                s += diff_learnt_ratio_list[i];
+            }
+            if(s <= 5.0){
+                nbNotGrowth++;
+            }
+            changeBranchStep = (++changeBranchStep) % 3;
+            if (changeBranchStep == 0){
+                double p_branch;
+                switch (nbNotGrowth)
+                {
+                case 3:
+                    p_branch = 0.9;
+                    break;
+                case 2:
+                    p_branch = 0.6;
+                    break;
+                case 1:
+                    p_branch = 0.3;
+                    break;
+                default:
+                    p_branch = -1.0;
+                }
+                p = drand(random_seed);
+                if(p >= 0 && p < p_branch){
+                    changeBranch();
+                }
+                nbNotGrowth = 0;
+            }
+        }        
     }
     
     if (verbosity >= 1)

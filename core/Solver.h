@@ -426,7 +426,17 @@ public:
     uint64_t learnt_simplified_length_record,learnt_original_length_record;
     uint64_t origin_simplified_length_record,origin_original_length_record;
     uint64_t s_propagations;
-
+    //-------------------difference---------------------
+    void changeBranch();
+    uint64_t changeBranchGap = 5;
+    uint64_t simplifyCount = 0;
+    int nbNotGrowth = 0;
+    int window_size = 15;
+    double origin_ratio;
+    double learnt_ratio;
+    vec<double> learnt_ratio_list;
+    vec<double> diff_learnt_ratio_list;
+    //-------------------difference---------------------
     vec<Lit> simp_learnt_clause;
     // vec<CRef> simp_reason_clause;
     void	simpleAnalyze(CRef confl, vec<Lit>& out_learnt, bool True_confl);
