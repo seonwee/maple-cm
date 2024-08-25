@@ -2006,7 +2006,10 @@ lbool Solver::solve_()
             for(int i=diff_learnt_ratio_list.size()-window_size;i<diff_learnt_ratio_list.size();i++){
                 s += diff_learnt_ratio_list[i];
             }
-            if(s <= 5.0){
+            if(VSIDS && s <= 5.0){
+                nbNotGrowth++;
+            }
+            if(!VSIDS && s <= 0.8){
                 nbNotGrowth++;
             }
             changeBranchStep = (++changeBranchStep) % 3;
