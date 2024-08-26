@@ -2021,12 +2021,12 @@ lbool Solver::solve_()
                         p = drand(random_seed);
                         if(p >= 0 && p < p_branch){
                             changeBranch(); // lrb -> vsids
+                        }
                     }
                 }
-            }
-        }        
+            }        
+        }
     }
-    
     if (verbosity >= 1)
         printf("c ===============================================================================\n");
     
