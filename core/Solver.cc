@@ -718,10 +718,6 @@ bool Solver::simplifyAll()
             (origin_original_length_record - origin_simplified_length_record) * 100 / 
             (double)origin_original_length_record;
     //printf("%u %u\n",origin_original_length_record,origin_simplified_length_record);
-    learnt_ratio_list.push(learnt_ratio);
-    if(learnt_ratio_list.size()>1){
-        diff_learnt_ratio_list.push(learnt_ratio_list.last()-learnt_ratio_list[learnt_ratio_list.size()-2]);
-    }
     return true;
 }
 
@@ -1717,7 +1713,7 @@ lbool Solver::search(int& nof_conflicts)
     //
     if (conflicts >= curSimplify * nbconfbeforesimplify){
         nbSimplifyAll++;
-        simplifyCount++;
+        nbVivify++;
 //        printf("c ### simplifyAll %llu on conflict : %lld and restart: %lld\n",  nbSimplifyAll, conflicts, starts);
         if (!simplifyAll()){
             return l_False;
@@ -1924,8 +1920,9 @@ void Solver::changeBranch(){
 #ifdef ANTI_EXPLORATION
         canceled.clear();
 #endif
-    }
-    printf("c Switched to LRB.\n");
+    }else{
+        printf("c Switched to LRB.\n");
+    }    
     VSIDS = !VSIDS;        
 }
 // NOTE: assumptions passed in member-variable 'assumptions'.
@@ -1965,30 +1962,22 @@ lbool Solver::solve_()
 #endif
         return l_False;
     }
-
-    //--------------------difference--------------------
-
-    //--------------------difference--------------------
-
-    //--------------------difference--------------------
     double first_origin_ratio = origin_ratio;
-    learnt_ratio_list.capacity(1000);
-    diff_learnt_ratio_list.capacity(1000);
-    //--------------------difference--------------------
     VSIDS = true;
     int init = 10000;
     while (status == l_Undef && init > 0 /*&& withinBudget()*/&& !isTimeOut())
         status = search(init);
-    
-    
-    //--------------------difference--------------------
-    if(first_origin_ratio<=0.25){
-        VSIDS = false;
+
+    if(first_origin_ratio <= 1.0){
+        changeBranch();//vsids -> LRB
     }
-    int changeBranchStep = 0;
-    double p;
-    //--------------------difference--------------------
+
     printf("c It will be possible to change the branching strategy.\n");
+    double p;
+    double p_branch;
+    int curr_change = 0;
+    int changeStep = 1;
+    int nbChangeBranchLimit = luby(2, curr_change) * changeStep;
     // Search:
     int curr_restarts = 0;
     while (status == l_Undef /*&& withinBudget()*/&& !isTimeOut()){
@@ -2000,40 +1989,40 @@ lbool Solver::solve_()
             curr_restarts++;
             status = search(nof_conflicts);
         }
-        if(diff_learnt_ratio_list.size() >= window_size && simplifyCount > changeBranchGap){
-            simplifyCount = 0;
-            double s = 0;
-            for(int i=diff_learnt_ratio_list.size()-window_size;i<diff_learnt_ratio_list.size();i++){
-                s += diff_learnt_ratio_list[i];
-            }
-            if(VSIDS && s <= 5.0){
-                nbNotGrowth++;
-            }
-            if(!VSIDS && s <= 0.8){
-                nbNotGrowth++;
-            }
-            changeBranchStep = (++changeBranchStep) % 3;
-            if (changeBranchStep == 0){
-                double p_branch;
-                switch (nbNotGrowth)
-                {
-                case 3:
-                    p_branch = 0.9;
-                    break;
-                case 2:
-                    p_branch = 0.6;
-                    break;
-                case 1:
-                    p_branch = 0.3;
-                    break;
-                default:
-                    p_branch = -1.0;
+        if(nbVivify>=nbChangeBranchLimit){
+            nbVivify = 0;
+            nbChangeBranchLimit = luby(2, ++curr_change) * changeStep;
+            if(VSIDS){
+                if((learnt_ratio <= 14.0 && origin_ratio <= 1.0) || (learnt_ratio >= 40.0 && origin_ratio >= 4.5)){
+                    p_branch = 0.85;
+                    p = drand(random_seed);
+                    if(p >= 0 && p < p_branch){
+                        changeBranch(); // vsids -> lrb
+                    }
+                }else{
+                    if(origin_ratio <= 0.5){
+                        p_branch = 0.5;
+                        p = drand(random_seed);
+                        if(p >= 0 && p < p_branch){
+                            changeBranch(); // vsids -> lrb
+                        }
+                    }
                 }
-                p = drand(random_seed);
-                if(p >= 0 && p < p_branch){
-                    changeBranch();
+            }else{
+                if(learnt_ratio > 14.0 && origin_ratio > 1.0){
+                    p_branch = 0.85;
+                    p = drand(random_seed);
+                    if(p >= 0 && p < p_branch){
+                        changeBranch(); // lrb -> vsids
+                    }
+                }else{
+                    if(learnt_ratio > 7.0 && origin_ratio > 0.3){
+                        p_branch = 0.3;
+                        p = drand(random_seed);
+                        if(p >= 0 && p < p_branch){
+                            changeBranch(); // lrb -> vsids
+                    }
                 }
-                nbNotGrowth = 0;
             }
         }        
     }
