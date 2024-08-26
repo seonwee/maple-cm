@@ -246,7 +246,7 @@ int main(int argc, char** argv)
                     printf("%s%s%d", (i==0)?"":" ", (S.model[i]==l_True)?"":"-", i+1);
             printf(" 0\n");
         }
-
+        fflush(stdout);
         if (S.drup_file && ret == l_False){
 #ifdef BIN_DRUP
             fputc('a', S.drup_file); fputc(0, S.drup_file);
