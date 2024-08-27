@@ -1977,7 +1977,7 @@ lbool Solver::solve_()
     double p_branch;
     int curr_change = 0;
     int changeStep = 1;
-    int nbChangeBranchLimit = luby(2, curr_change) * changeStep;
+    int nbChangeBranchLimit = luby(2, ++curr_change) * changeStep;
     // Search:
     int curr_restarts = 0;
     while (status == l_Undef /*&& withinBudget()*/&& !isTimeOut()){
@@ -1994,14 +1994,14 @@ lbool Solver::solve_()
             nbChangeBranchLimit = luby(2, ++curr_change) * changeStep;
             if(VSIDS){
                 if((learnt_ratio <= 14.0 && origin_ratio <= 1.0) || (learnt_ratio >= 40.0 && origin_ratio >= 4.5)){
-                    p_branch = 0.85;
+                    p_branch = 0.80;
                     p = drand(random_seed);
                     if(p >= 0 && p < p_branch){
                         changeBranch(); // vsids -> lrb
                     }
                 }else{
-                    if(origin_ratio <= 0.5){
-                        p_branch = 0.5;
+                    if(learnt_ratio <= 8.0 || origin_ratio <= 0.3){
+                        p_branch = 0.4;
                         p = drand(random_seed);
                         if(p >= 0 && p < p_branch){
                             changeBranch(); // vsids -> lrb
@@ -2010,14 +2010,14 @@ lbool Solver::solve_()
                 }
             }else{
                 if(learnt_ratio > 14.0 && origin_ratio > 1.0){
-                    p_branch = 0.85;
+                    p_branch = 0.80;
                     p = drand(random_seed);
                     if(p >= 0 && p < p_branch){
                         changeBranch(); // lrb -> vsids
                     }
                 }else{
-                    if(learnt_ratio > 7.0 && origin_ratio > 0.3){
-                        p_branch = 0.3;
+                    if(learnt_ratio > 12.0 || origin_ratio > 1.5){
+                        p_branch = 0.4;
                         p = drand(random_seed);
                         if(p >= 0 && p < p_branch){
                             changeBranch(); // lrb -> vsids
