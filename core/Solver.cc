@@ -1978,6 +1978,7 @@ lbool Solver::solve_()
     int curr_change = 0;
     int changeStep = 1;
     int nbChangeBranchLimit = luby(2, ++curr_change) * changeStep;
+    nbVivify = 0;
     // Search:
     int curr_restarts = 0;
     while (status == l_Undef /*&& withinBudget()*/&& !isTimeOut()){
