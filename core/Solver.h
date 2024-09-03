@@ -431,6 +431,7 @@ public:
     double origin_ratio;
     double learnt_ratio;
     uint64_t nbVivify = 0;
+    bool ratioUpdate = false;
     //-------------------difference---------------------
     vec<Lit> simp_learnt_clause;
     // vec<CRef> simp_reason_clause;

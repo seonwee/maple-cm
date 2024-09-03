@@ -717,6 +717,7 @@ bool Solver::simplifyAll()
             0 : 
             (origin_original_length_record - origin_simplified_length_record) * 100 / 
             (double)origin_original_length_record;
+    ratioUpdate = true;
     //printf("%u %u\n",origin_original_length_record,origin_simplified_length_record);
     return true;
 }
@@ -1967,38 +1968,37 @@ lbool Solver::solve_()
     int init = 10000;
     while (status == l_Undef && init > 0 /*&& withinBudget()*/&& !isTimeOut())
         status = search(init);
-
-    if(first_origin_ratio <= 1.0){
+    if(first_origin_ratio <= 0.90){
         changeBranch();//vsids -> LRB
     }
-
     printf("c It will be possible to change the branching strategy.\n");
+    nbVivify = 0;
     double p;
     double p_branch;
-    int curr_change = 0;
-    int changeStep = 1;
-    int nbChangeBranchLimit = luby(2, ++curr_change) * changeStep;
-    nbVivify = 0;
+    int phase_allotment = 10000;
     // Search:
     int curr_restarts = 0;
-    while (status == l_Undef /*&& withinBudget()*/&& !isTimeOut()){
-        if (VSIDS){
-            int weighted = INT32_MAX;
-            status = search(weighted);
-        }else{
-            int nof_conflicts = luby(restart_inc, curr_restarts) * restart_first;
-            curr_restarts++;
-            status = search(nof_conflicts);
+    while(status == l_Undef && !isTimeOut()){
+        int weighted = phase_allotment;
+        while (status == l_Undef && weighted > 0 /*&& withinBudget()*/&& !isTimeOut()){
+            if (VSIDS){
+                status = search(weighted);
+            }else{
+                int nof_conflicts = luby(restart_inc, curr_restarts) * restart_first;
+                curr_restarts++;
+                weighted -= nof_conflicts;
+                status = search(nof_conflicts);
+            }                        
         }
-        if(nbVivify>=nbChangeBranchLimit){
-            nbVivify = 0;
-            nbChangeBranchLimit = luby(2, ++curr_change) * changeStep;
+        if(ratioUpdate){
+            ratioUpdate = false;
             if(VSIDS){
                 if((learnt_ratio <= 14.0 && origin_ratio <= 1.0) || (learnt_ratio >= 40.0 && origin_ratio >= 4.5)){
                     p_branch = 0.80;
                     p = drand(random_seed);
                     if(p >= 0 && p < p_branch){
                         changeBranch(); // vsids -> lrb
+                        phase_allotment += phase_allotment / 10;
                     }
                 }else{
                     if(learnt_ratio <= 8.0 || origin_ratio <= 0.3){
@@ -2006,6 +2006,7 @@ lbool Solver::solve_()
                         p = drand(random_seed);
                         if(p >= 0 && p < p_branch){
                             changeBranch(); // vsids -> lrb
+                            phase_allotment += phase_allotment / 10;
                         }
                     }
                 }
@@ -2015,6 +2016,7 @@ lbool Solver::solve_()
                     p = drand(random_seed);
                     if(p >= 0 && p < p_branch){
                         changeBranch(); // lrb -> vsids
+                        phase_allotment += phase_allotment / 10;
                     }
                 }else{
                     if(learnt_ratio > 12.0 || origin_ratio > 1.5){
@@ -2022,12 +2024,14 @@ lbool Solver::solve_()
                         p = drand(random_seed);
                         if(p >= 0 && p < p_branch){
                             changeBranch(); // lrb -> vsids
+                            phase_allotment += phase_allotment / 10;
                         }
                     }
                 }
-            }        
-        }
+            }   
+        }        
     }
+    
     if (verbosity >= 1)
         printf("c ===============================================================================\n");
     
