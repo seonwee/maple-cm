@@ -1955,10 +1955,10 @@ lbool Solver::solve_()
     }
     
     VSIDS = false;
-    int init = 10000;
-    while (status == l_Undef && init > 0 /*&& withinBudget()*/&& !isTimeOut())
-        status = search(init);
-    VSIDS = true;
+    // int init = 10000;
+    // while (status == l_Undef && init > 0 /*&& withinBudget()*/&& !isTimeOut())
+    //     status = search(init);
+    // VSIDS = true;
     
     // Search:
     int curr_restarts = 0;
