@@ -6,3 +6,6 @@
 *.txt
 simp/glucose
 script.sh
+lock/
+result/
+parallel_run.sh
