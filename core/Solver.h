@@ -442,6 +442,24 @@ public:
 
     bool simplifyUsedOriginalClauses();
 
+    // Additional parameters are used to distinguish between industrial and crafted instances
+    uint64_t sumLearntLBD = 0;
+    uint64_t nbLearntClause = 0;
+    double avgLearntLBD = 0;
+
+    uint64_t sumVivifiedLearntSize = 0;
+    uint64_t nbVivifiedLearnts = 0;
+    double avgVivifiedLearntSize = 0;
+
+    uint64_t sumVivifiedOriginSize = 0;
+    uint64_t nbVivifiedOrigins = 0;
+    double avgVivifiedOriginSize = 0;
+
+    double avgVivifiedSize = 0;
+
+    uint64_t sumUpAfterDecide = 0;
+    uint64_t nbDecide = 0;
+    double avgUpAfterDecide = 0;
 };
 
 
