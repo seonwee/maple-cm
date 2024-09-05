@@ -492,9 +492,13 @@ bool Solver::simplifyLearnt(Clause& c, CRef cr, vec<Lit>& lits,bool isLearnt) {
         
         simplified_length_record += lits.size();
         if(isLearnt){
+            nbVivifiedLearnts++;
+            sumVivifiedLearntSize += lits.size();
             learnt_simplified_length_record += lits.size();
         }else{
             origin_simplified_length_record += lits.size();
+            nbVivifiedOrigins++;
+            sumVivifiedOriginSize += lits.size();
         }        
         return true;
     }
@@ -706,6 +710,27 @@ bool Solver::simplifyAll()
             (origin_original_length_record - origin_simplified_length_record) * 100 / 
             (double)origin_original_length_record);
     //printf("%u %u\n",origin_original_length_record,origin_simplified_length_record);
+    avgLearntLBD = nbLearntClause == 0 ? 0 :(double)sumLearntLBD / (double)nbLearntClause;
+    sumLearntLBD = 0;
+    nbLearntClause = 0;
+
+    avgVivifiedSize = (nbVivifiedLearnts+nbVivifiedLearnts) == 0 ? 0 :
+                    (double)(sumVivifiedLearntSize + sumVivifiedOriginSize) /
+                    (double)(nbVivifiedLearnts + nbVivifiedOrigins);
+
+    avgVivifiedLearntSize = nbVivifiedLearnts == 0 ? 0 : (double)sumVivifiedLearntSize / (double)nbVivifiedLearnts;
+    sumVivifiedLearntSize = 0;
+    nbVivifiedLearnts = 0;
+
+    avgVivifiedOriginSize = nbVivifiedOrigins == 0 ? 0 : (double)sumVivifiedOriginSize / (double)nbVivifiedOrigins;
+    sumVivifiedOriginSize = 0;
+    nbVivifiedOrigins = 0;
+
+    avgUpAfterDecide = nbDecide == 0 ? 0 : (double)sumUpAfterDecide / (double)nbDecide;
+    sumUpAfterDecide = 0;
+    nbDecide = 0;
+    printf("avgLearntLBD:%.2f avgVivifiedSize:%.2f avgVivifiedLearntSize:%.2f avgVivifiedOriginSize:%.2f avgUpAfterDecide:%.2f\n",
+    avgLearntLBD,avgVivifiedSize,avgVivifiedLearntSize,avgVivifiedOriginSize,avgUpAfterDecide);
     return true;
 }
 
@@ -1472,7 +1497,7 @@ CRef Solver::propagate()
         vec<Watcher>&  ws  = watches[p];
         Watcher        *i, *j, *end;
         num_props++;
-        
+        sumUpAfterDecide++;
         vec<Watcher>& ws_bin = watches_bin[p];  // Propagate binary clauses first.
         for (int k = 0; k < ws_bin.size(); k++){
             Lit the_other = ws_bin[k].blocker;
@@ -1721,6 +1746,8 @@ lbool Solver::search(int& nof_conflicts)
             cancelUntil(backtrack_level);
             
             lbd--;
+            sumLearntLBD += lbd;
+            nbLearntClause++;
             if (VSIDS){
                 cached = false;
                 conflicts_VSIDS++;
@@ -1818,7 +1845,7 @@ lbool Solver::search(int& nof_conflicts)
                 // New variable decision:
                 decisions++;
                 next = pickBranchLit();
-
+                nbDecide++;
                 if (next == lit_Undef)
                     // Model found:
                     return l_True;
