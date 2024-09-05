@@ -836,7 +836,7 @@ bool Solver::simplifyOriginalClauses() {
     vec<Lit> lits;
 
     int nbShortened=0, ci, cj, nbRemoved=0, nbShortening=0;
-
+    origin_simplified_length_record = origin_original_length_record = 0;
     // sort(clauses, clauseSize_lt(ca));
     printf("c total nb of literals: %llu\n", clauses_literals);
     // if (clauses.size()> simpLimit) {
@@ -860,7 +860,7 @@ bool Solver::simplifyOriginalClauses() {
                 add_oc.clear();
                 for (int i = 0; i < c.size(); i++) add_oc.push(c[i]); }
 
-            if (simplifyLearnt(c, cr, lits)) {
+            if (simplifyLearnt(c, cr, lits, false)) {
 
                 if(drup_file && add_oc.size()!=lits.size()){
 #ifdef BIN_DRUP
@@ -918,7 +918,11 @@ bool Solver::simplifyOriginalClauses() {
 //           nbOriginalClauses_before, clauses.size(), nbShortening, nbShortened, avg);
 //    printf("c Original clause minimization time: %5.2lfs, number UPs: %llu\n",
 //           cpuTime() - begin_simp_time, s_propagations);
-
+    printf("c origin size_reduce_ratio     : %4.2f%%\n",
+            origin_original_length_record == 0 ? 
+            0 : 
+            (origin_original_length_record - origin_simplified_length_record) * 100 / 
+            (double)origin_original_length_record);
     return true;
 }
 
@@ -1079,7 +1083,6 @@ void Solver::cancelUntil(int level) {
     if (decisionLevel() > level){
         for (int c = trail.size()-1; c >= trail_lim[level]; c--){
             Var      x  = var(trail[c]);
-            
             if (!VSIDS){
                 uint32_t age = conflicts - picked[x];
                 if (age > 0){
@@ -1096,8 +1099,7 @@ void Solver::cancelUntil(int level) {
 #ifdef ANTI_EXPLORATION
                 canceled[x] = conflicts;
 #endif
-            }
-            
+            }            
             assigns [x] = l_Undef;
             if (phase_saving > 1 || (phase_saving == 1) && c > trail_lim.last())
                 polarity[x] = sign(trail[c]);
@@ -1925,8 +1927,8 @@ lbool Solver::solve_()
         std::thread t(sleep, 2500);
         t.detach();
     #else
-        //signal(SIGALRM, SIGALRM_switch);
-        //alarm(2500);//2500
+        signal(SIGALRM, SIGALRM_switch);
+        alarm(2500);//2500
     #endif
     
     model.clear(); usedClauses.clear();
@@ -1955,12 +1957,12 @@ lbool Solver::solve_()
 #endif
         return l_False;
     }
-    
-    VSIDS = true;
-    int init = 10000;
-    while (status == l_Undef && init > 0 /*&& withinBudget()*/&& !isTimeOut())
-        status = search(init);
-    VSIDS = true;
+    return l_Undef;
+    // VSIDS = false;
+    // int init = 10000;
+    // while (status == l_Undef && init > 0 /*&& withinBudget()*/&& !isTimeOut())
+    //     status = search(init);
+    VSIDS = false;
     
     // Search:
     int curr_restarts = 0;
