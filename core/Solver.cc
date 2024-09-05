@@ -1957,7 +1957,6 @@ lbool Solver::solve_()
 #endif
         return l_False;
     }
-    return l_Undef;
     VSIDS = true;
     int init = 10000;
     while (status == l_Undef && init > 0 /*&& withinBudget()*/&& !isTimeOut())
