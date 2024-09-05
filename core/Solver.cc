@@ -1927,8 +1927,8 @@ lbool Solver::solve_()
         std::thread t(sleep, 2500);
         t.detach();
     #else
-        signal(SIGALRM, SIGALRM_switch);
-        alarm(2500);//2500
+        // signal(SIGALRM, SIGALRM_switch);
+        // alarm(2500);//2500
     #endif
     
     model.clear(); usedClauses.clear();
@@ -1957,7 +1957,6 @@ lbool Solver::solve_()
 #endif
         return l_False;
     }
-    return l_Undef;
     // VSIDS = false;
     // int init = 10000;
     // while (status == l_Undef && init > 0 /*&& withinBudget()*/&& !isTimeOut())
