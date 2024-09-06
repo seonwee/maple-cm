@@ -747,7 +747,7 @@ bool Solver::simplifyAll()
     avgLearntLBD,avgVivifiedSize,
     avgVivifiedLearntSize,avgVivifiedOriginSize,
     avgUpAfterDecide,avgVivifiedLBD,
-    avgVivifiedLearntLBD,sumVivifiedOriginLBD
+    avgVivifiedLearntLBD,avgVivifiedOriginLBD
     );
     return true;
 }
