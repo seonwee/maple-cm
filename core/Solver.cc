@@ -491,14 +491,17 @@ bool Solver::simplifyLearnt(Clause& c, CRef cr, vec<Lit>& lits,bool isLearnt) {
         cancelUntilTrailRecord();
         
         simplified_length_record += lits.size();
+        int lbd = computeLBD(lits);
         if(isLearnt){
             nbVivifiedLearnts++;
             sumVivifiedLearntSize += lits.size();
             learnt_simplified_length_record += lits.size();
+            sumVivifiedLearntLBD += lbd;
         }else{
             origin_simplified_length_record += lits.size();
             nbVivifiedOrigins++;
             sumVivifiedOriginSize += lits.size();
+            sumVivifiedOriginLBD += lbd;
         }        
         return true;
     }
@@ -714,9 +717,19 @@ bool Solver::simplifyAll()
     sumLearntLBD = 0;
     nbLearntClause = 0;
 
-    avgVivifiedSize = (nbVivifiedLearnts+nbVivifiedLearnts) == 0 ? 0 :
+    avgVivifiedSize = (nbVivifiedLearnts+nbVivifiedOrigins) == 0 ? 0 :
                     (double)(sumVivifiedLearntSize + sumVivifiedOriginSize) /
                     (double)(nbVivifiedLearnts + nbVivifiedOrigins);
+
+    avgVivifiedLBD = (nbVivifiedLearnts+nbVivifiedOrigins) == 0 ? 0 :
+                    (double)(sumVivifiedLearntLBD + sumVivifiedOriginLBD) /
+                    (double)(nbVivifiedLearnts + nbVivifiedOrigins);
+    
+    avgVivifiedLearntLBD = nbVivifiedLearnts == 0 ? 0 : (double)sumVivifiedLearntLBD / (double)nbVivifiedLearnts;
+    sumVivifiedLearntLBD = 0;
+
+    avgVivifiedOriginLBD = nbVivifiedOrigins == 0 ? 0 : (double)sumVivifiedOriginLBD / (double)nbVivifiedOrigins;
+    sumVivifiedOriginLBD = 0;
 
     avgVivifiedLearntSize = nbVivifiedLearnts == 0 ? 0 : (double)sumVivifiedLearntSize / (double)nbVivifiedLearnts;
     sumVivifiedLearntSize = 0;
@@ -729,8 +742,13 @@ bool Solver::simplifyAll()
     avgUpAfterDecide = nbDecide == 0 ? 0 : (double)sumUpAfterDecide / (double)nbDecide;
     sumUpAfterDecide = 0;
     nbDecide = 0;
-    printf("avgLearntLBD:%.2f avgVivifiedSize:%.2f avgVivifiedLearntSize:%.2f avgVivifiedOriginSize:%.2f avgUpAfterDecide:%.2f\n",
-    avgLearntLBD,avgVivifiedSize,avgVivifiedLearntSize,avgVivifiedOriginSize,avgUpAfterDecide);
+
+    printf("avgLearntLBD:%.2f avgVivifiedSize:%.2f avgVivifiedLearntSize:%.2f avgVivifiedOriginSize:%.2f avgUpAfterDecide:%.2f avgVivifiedLBD:%.2f avgVivifiedLearntLBD:%.2f avgVivifiedOriginLBD:%.2f\n",
+    avgLearntLBD,avgVivifiedSize,
+    avgVivifiedLearntSize,avgVivifiedOriginSize,
+    avgUpAfterDecide,avgVivifiedLBD,
+    avgVivifiedLearntLBD,sumVivifiedOriginLBD
+    );
     return true;
 }
 
