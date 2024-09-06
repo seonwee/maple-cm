@@ -460,6 +460,14 @@ public:
     uint64_t sumUpAfterDecide = 0;
     uint64_t nbDecide = 0;
     double avgUpAfterDecide = 0;
+
+    double avgVivifiedLBD = 0;
+
+    uint64_t sumVivifiedLearntLBD = 0;
+    double avgVivifiedLearntLBD = 0;
+
+    uint64_t sumVivifiedOriginLBD = 0;
+    double avgVivifiedOriginLBD = 0;
 };
 
 
