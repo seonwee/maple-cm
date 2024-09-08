@@ -468,6 +468,13 @@ public:
 
     uint64_t sumVivifiedOriginLBD = 0;
     double avgVivifiedOriginLBD = 0;
+
+    uint64_t sumLearntSize = 0;
+    double avgLearntSize = 0;
+
+    uint64_t sumBacktrackLength = 0;
+    uint64_t nbBacktracks = 0;
+    double avgBacktrackLength = 0;
 };
 
 
