@@ -432,6 +432,9 @@ public:
     double learnt_ratio;
     uint64_t nbVivify = 0;
     bool ratioUpdate = false;
+    uint64_t sumLearntLBD = 0;
+    uint64_t nbLearntClause = 0;
+    double avgLearntLBD = 0;
     //-------------------difference---------------------
     vec<Lit> simp_learnt_clause;
     // vec<CRef> simp_reason_clause;

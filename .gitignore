@@ -9,3 +9,4 @@ script.sh
 lock/
 result/
 parallel_run.sh
+*.cnf

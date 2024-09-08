@@ -718,6 +718,9 @@ bool Solver::simplifyAll()
             (origin_original_length_record - origin_simplified_length_record) * 100 / 
             (double)origin_original_length_record;
     ratioUpdate = true;
+    avgLearntLBD = nbLearntClause == 0 ? 0 :(double)sumLearntLBD / (double)nbLearntClause;
+    sumLearntLBD = 0;
+    nbLearntClause = 0;
     //printf("%u %u\n",origin_original_length_record,origin_simplified_length_record);
     return true;
 }
@@ -1742,6 +1745,8 @@ lbool Solver::search(int& nof_conflicts)
             cancelUntil(backtrack_level);
             
             lbd--;
+            sumLearntLBD += lbd;
+            nbLearntClause++;
             if (VSIDS){
                 cached = false;
                 conflicts_VSIDS++;
@@ -1926,6 +1931,54 @@ void Solver::changeBranch(){
     }    
     VSIDS = !VSIDS;        
 }
+
+#define NUM_FEATURES 3
+
+// 逻辑回归预测函数
+double vsids_predict_logistic_regression(double learnt_ratio, double origin_ratio, double avgLearntLBD) {
+	// 模型参数
+	const double weights[NUM_FEATURES] = {-0.8948945355874791, -0.2954295601824622, 1.5257255402280951};
+	const double intercept = 0.3548979120901783;
+	const double scaler_mean[NUM_FEATURES] = {20.16904761904762, 1.9909523809523804, 13.259761904761902};
+	const double scaler_scale[NUM_FEATURES] = {15.384535650717854, 2.7154810233563804, 6.162830784359082};
+	
+	// 输入特征
+	double features[NUM_FEATURES] = {learnt_ratio, origin_ratio, avgLearntLBD};
+	
+	// 计算 z
+	double z = intercept;
+	for (int i = 0; i < NUM_FEATURES; i++) {
+		// 标准化特征
+		double x_scaled = (features[i] - scaler_mean[i]) / scaler_scale[i];
+		z += weights[i] * x_scaled;
+	}
+	
+	// 应用逻辑函数（sigmoid）
+	return 1.0 / (1.0 + exp(-z));// 如果概率大于 0.5，偏（crafted instance），否则偏（industry instance）
+}
+
+double lrb_predict_logistic_regression(double learnt_ratio, double origin_ratio, double avgLearntLBD) {
+    // 更新后的模型参数
+    const double weights[NUM_FEATURES] = {-0.7431931017859035, -0.45679857315817696, 0.7139571643790082};
+    const double intercept = 0.11201593831681086;
+    const double scaler_mean[NUM_FEATURES] = {17.687738095238092, 1.6298809523809528, 31.201547619047627};
+    const double scaler_scale[NUM_FEATURES] = {14.287339163048426, 2.4654350982986557, 37.593617856722126};
+
+    // 输入特征
+    double features[NUM_FEATURES] = {learnt_ratio, origin_ratio, avgLearntLBD};
+
+    // 计算 z
+    double z = intercept;
+    for (int i = 0; i < NUM_FEATURES; i++) {
+        // 标准化特征
+        double x_scaled = (features[i] - scaler_mean[i]) / scaler_scale[i];
+        z += weights[i] * x_scaled;
+    }
+
+    // 应用逻辑函数（sigmoid）
+    return 1.0 / (1.0 + exp(-z));// 如果概率大于 0.5，偏（crafted instance），否则偏（industry instance）
+}
+
 // NOTE: assumptions passed in member-variable 'assumptions'.
 lbool Solver::solve_()
 {
@@ -1963,18 +2016,20 @@ lbool Solver::solve_()
 #endif
         return l_False;
     }
-    double first_origin_ratio = origin_ratio;
+    double p_branch;
+    double p;
+    double fix_p = 0.6;
     VSIDS = true;
     int init = 10000;
     while (status == l_Undef && init > 0 /*&& withinBudget()*/&& !isTimeOut())
         status = search(init);
-    if(first_origin_ratio <= 0.90){
-        changeBranch();//vsids -> LRB
-    }
     printf("c It will be possible to change the branching strategy.\n");
-    nbVivify = 0;
-    double p;
-    double p_branch;
+    p_branch = vsids_predict_logistic_regression(learnt_ratio,origin_ratio,avgLearntLBD);
+    //p = drand(random_seed);
+    if(p_branch >= fix_p){
+        changeBranch();
+    }       
+    nbVivify = 0;    
     int phase_allotment = 10000;
     // Search:
     int curr_restarts = 0;
@@ -1993,40 +2048,20 @@ lbool Solver::solve_()
         if(ratioUpdate){
             ratioUpdate = false;
             if(VSIDS){
-                if((learnt_ratio <= 14.0 && origin_ratio <= 1.0) || (learnt_ratio >= 40.0 && origin_ratio >= 4.5)){
-                    p_branch = 0.80;
-                    p = drand(random_seed);
-                    if(p >= 0 && p < p_branch){
-                        changeBranch(); // vsids -> lrb
-                        phase_allotment += phase_allotment / 10;
-                    }
-                }else{
-                    if(learnt_ratio <= 8.0 || origin_ratio <= 0.3){
-                        p_branch = 0.4;
-                        p = drand(random_seed);
-                        if(p >= 0 && p < p_branch){
-                            changeBranch(); // vsids -> lrb
-                            phase_allotment += phase_allotment / 10;
-                        }
-                    }
-                }
+                p_branch = vsids_predict_logistic_regression(learnt_ratio,origin_ratio,avgLearntLBD);
+                //p = drand(random_seed);
+                //printf("p_branch:%.2f\n",p_branch);
+                if(p_branch >= fix_p){                    
+                    changeBranch();
+                    phase_allotment += phase_allotment / 10;
+                }   
             }else{
-                if(learnt_ratio > 14.0 && origin_ratio > 1.0){
-                    p_branch = 0.80;
-                    p = drand(random_seed);
-                    if(p >= 0 && p < p_branch){
-                        changeBranch(); // lrb -> vsids
-                        phase_allotment += phase_allotment / 10;
-                    }
-                }else{
-                    if(learnt_ratio > 12.0 || origin_ratio > 1.5){
-                        p_branch = 0.4;
-                        p = drand(random_seed);
-                        if(p >= 0 && p < p_branch){
-                            changeBranch(); // lrb -> vsids
-                            phase_allotment += phase_allotment / 10;
-                        }
-                    }
+                p_branch = lrb_predict_logistic_regression(learnt_ratio,origin_ratio,avgLearntLBD);
+                //p = drand(random_seed);
+                //printf("p_branch:%.2f\n",p_branch);
+                if((1-p_branch) >= fix_p){                    
+                    changeBranch();
+                    phase_allotment += phase_allotment / 10;
                 }
             }   
         }        
