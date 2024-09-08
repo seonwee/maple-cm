@@ -713,6 +713,10 @@ bool Solver::simplifyAll()
             (origin_original_length_record - origin_simplified_length_record) * 100 / 
             (double)origin_original_length_record);
     //printf("%u %u\n",origin_original_length_record,origin_simplified_length_record);
+
+    avgLearntSize = nbLearntClause == 0 ? 0 :(double)sumLearntSize / (double)nbLearntClause;
+    sumLearntSize = 0;
+
     avgLearntLBD = nbLearntClause == 0 ? 0 :(double)sumLearntLBD / (double)nbLearntClause;
     sumLearntLBD = 0;
     nbLearntClause = 0;
@@ -743,11 +747,19 @@ bool Solver::simplifyAll()
     sumUpAfterDecide = 0;
     nbDecide = 0;
 
-    printf("avgLearntLBD:%.2f avgVivifiedSize:%.2f avgVivifiedLearntSize:%.2f avgVivifiedOriginSize:%.2f avgUpAfterDecide:%.2f avgVivifiedLBD:%.2f avgVivifiedLearntLBD:%.2f avgVivifiedOriginLBD:%.2f\n",
-    avgLearntLBD,avgVivifiedSize,
-    avgVivifiedLearntSize,avgVivifiedOriginSize,
-    avgUpAfterDecide,avgVivifiedLBD,
-    avgVivifiedLearntLBD,avgVivifiedOriginLBD
+    avgBacktrackLength = nbBacktracks == 0 ? 0 : (double)sumBacktrackLength / (double)nbBacktracks;
+    nbBacktracks = 0;
+    sumBacktrackLength = 0;
+
+    // printf("avgLearntLBD:%.2f avgVivifiedSize:%.2f avgVivifiedLearntSize:%.2f avgVivifiedOriginSize:%.2f avgUpAfterDecide:%.2f avgVivifiedLBD:%.2f avgVivifiedLearntLBD:%.2f avgVivifiedOriginLBD:%.2f\n",
+    // avgLearntLBD,avgVivifiedSize,
+    // avgVivifiedLearntSize,avgVivifiedOriginSize,
+    // avgUpAfterDecide,avgVivifiedLBD,
+    // avgVivifiedLearntLBD,avgVivifiedOriginLBD
+    // );
+
+    printf("avgLearntLBD:%.2f avgLearntSize:%.2f avgUpAfterDecide:%.2f avgBacktrackLength:%.2f\n",
+    avgLearntLBD,avgLearntSize,avgUpAfterDecide,avgBacktrackLength
     );
     return true;
 }
@@ -1099,6 +1111,8 @@ bool Solver::satisfied(const Clause& c) const {
 //
 void Solver::cancelUntil(int level) {
     if (decisionLevel() > level){
+        sumBacktrackLength += decisionLevel() - level + 1;
+        nbBacktracks++;
         for (int c = trail.size()-1; c >= trail_lim[level]; c--){
             Var      x  = var(trail[c]);
             if (!VSIDS){
@@ -1767,6 +1781,7 @@ lbool Solver::search(int& nof_conflicts)
             
             lbd--;
             sumLearntLBD += lbd;
+            sumLearntSize += learnt_clause.size();
             nbLearntClause++;
             if (VSIDS){
                 cached = false;
