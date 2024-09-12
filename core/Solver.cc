@@ -2018,8 +2018,8 @@ lbool Solver::solve_()
     }
     double p_branch;
     //double p;
-    double fix_vsids = 0.4;
-    double fix_lrb = 0.6;
+    double fix_industry = 0.6;
+    double fix_crafted = 0.4;
     VSIDS = true;
     int init = 10000;
     while (status == l_Undef && init > 0 /*&& withinBudget()*/&& !isTimeOut())
@@ -2027,7 +2027,7 @@ lbool Solver::solve_()
     printf("c It will be possible to change the branching strategy.\n");
     p_branch = vsids_predict_logistic_regression(learnt_ratio,origin_ratio,avgLearntLBD);
     //p = drand(random_seed);
-    if(p_branch >= fix_vsids){
+    if(p_branch >= fix_crafted){
         changeBranch();
     }           
     // int phase_allotment = 10000;
@@ -2085,12 +2085,12 @@ lbool Solver::solve_()
             branchLimit = branchLimit << 1;
             if(VSIDS){
                 p_branch = vsids_predict_logistic_regression(learnt_ratio,origin_ratio,avgLearntLBD);
-                if(p_branch >= fix_vsids){                    
+                if(p_branch >= fix_crafted){                    
                     changeBranch();
                 }   
             }else{
                 p_branch = lrb_predict_logistic_regression(learnt_ratio,origin_ratio,avgLearntLBD);
-                if((1-p_branch) >= fix_lrb){                    
+                if((1-p_branch) >= fix_industry){                    
                     changeBranch();
                 }
             }   
