@@ -1936,33 +1936,11 @@ void Solver::changeBranch(){
 
 // 逻辑回归预测函数
 double vsids_predict_logistic_regression(double learnt_ratio, double origin_ratio, double avgLearntLBD) {
-	// 模型参数
-	const double weights[NUM_FEATURES] = {-0.8948945355874791, -0.2954295601824622, 1.5257255402280951};
-	const double intercept = 0.3548979120901783;
-	const double scaler_mean[NUM_FEATURES] = {20.16904761904762, 1.9909523809523804, 13.259761904761902};
-	const double scaler_scale[NUM_FEATURES] = {15.384535650717854, 2.7154810233563804, 6.162830784359082};
-	
-	// 输入特征
-	double features[NUM_FEATURES] = {learnt_ratio, origin_ratio, avgLearntLBD};
-	
-	// 计算 z
-	double z = intercept;
-	for (int i = 0; i < NUM_FEATURES; i++) {
-		// 标准化特征
-		double x_scaled = (features[i] - scaler_mean[i]) / scaler_scale[i];
-		z += weights[i] * x_scaled;
-	}
-	
-	// 应用逻辑函数（sigmoid）
-	return 1.0 / (1.0 + exp(-z));// 如果概率大于 0.5，偏（crafted instance），否则偏（industry instance）
-}
-
-double lrb_predict_logistic_regression(double learnt_ratio, double origin_ratio, double avgLearntLBD) {
-    // 更新后的模型参数
-    const double weights[NUM_FEATURES] = {-0.7431931017859035, -0.45679857315817696, 0.7139571643790082};
-    const double intercept = 0.11201593831681086;
-    const double scaler_mean[NUM_FEATURES] = {17.687738095238092, 1.6298809523809528, 31.201547619047627};
-    const double scaler_scale[NUM_FEATURES] = {14.287339163048426, 2.4654350982986557, 37.593617856722126};
+	    // 更新后的模型参数
+    const double weights[NUM_FEATURES] = {-1.132226218422969, -0.5466737727443176, -0.3397390259901191};
+    const double intercept = -0.43733584637469575;
+    const double scaler_mean[NUM_FEATURES] = {18.34133333333333, 1.294, 18.139115668916663};
+    const double scaler_scale[NUM_FEATURES] = {12.834114495705924, 1.636981164623873, 15.333846468557443};
 
     // 输入特征
     double features[NUM_FEATURES] = {learnt_ratio, origin_ratio, avgLearntLBD};
@@ -1976,7 +1954,29 @@ double lrb_predict_logistic_regression(double learnt_ratio, double origin_ratio,
     }
 
     // 应用逻辑函数（sigmoid）
-    return 1.0 / (1.0 + exp(-z));// 如果概率大于 0.5，偏（crafted instance），否则偏（industry instance）
+    return 1.0 / (1.0 + exp(-z));
+}
+
+double lrb_predict_logistic_regression(double learnt_ratio, double origin_ratio, double avgLearntLBD) {
+    // 更新后的模型参数
+    const double weights[NUM_FEATURES] = {-0.15621511419080567, -0.8068310526243103, 0.20468365771797992};
+    const double intercept = -0.27911110464525396;
+    const double scaler_mean[NUM_FEATURES] = {15.856, 1.2009999999999998, 28.859937310333326};
+    const double scaler_scale[NUM_FEATURES] = {11.044574565520092, 1.5471562084461075, 32.64838794707467};
+
+    // 输入特征
+    double features[NUM_FEATURES] = {learnt_ratio, origin_ratio, avgLearntLBD};
+
+    // 计算 z
+    double z = intercept;
+    for (int i = 0; i < NUM_FEATURES; i++) {
+        // 标准化特征
+        double x_scaled = (features[i] - scaler_mean[i]) / scaler_scale[i];
+        z += weights[i] * x_scaled;
+    }
+
+    // 应用逻辑函数（sigmoid）
+    return 1.0 / (1.0 + exp(-z));
 }
 
 // NOTE: assumptions passed in member-variable 'assumptions'.
@@ -2017,8 +2017,9 @@ lbool Solver::solve_()
         return l_False;
     }
     double p_branch;
-    double p;
-    double fix_p = 0.6;
+    //double p;
+    double fix_vsids = 0.6;
+    double fix_lrb = 0.4;
     VSIDS = true;
     int init = 10000;
     while (status == l_Undef && init > 0 /*&& withinBudget()*/&& !isTimeOut())
@@ -2026,47 +2027,75 @@ lbool Solver::solve_()
     printf("c It will be possible to change the branching strategy.\n");
     p_branch = vsids_predict_logistic_regression(learnt_ratio,origin_ratio,avgLearntLBD);
     //p = drand(random_seed);
-    if(p_branch >= fix_p){
+    if(p_branch >= fix_vsids){
         changeBranch();
-    }       
-    nbVivify = 0;    
-    int phase_allotment = 10000;
+    }           
+    // int phase_allotment = 10000;
+    // // Search:
+    // int curr_restarts = 0;
+    // while(status == l_Undef && !isTimeOut()){
+    //     int weighted = phase_allotment;
+    //     while (status == l_Undef && weighted > 0 /*&& withinBudget()*/&& !isTimeOut()){
+    //         if (VSIDS){
+    //             status = search(weighted);
+    //         }else{
+    //             int nof_conflicts = luby(restart_inc, curr_restarts) * restart_first;
+    //             curr_restarts++;
+    //             weighted -= nof_conflicts;
+    //             status = search(nof_conflicts);
+    //         }                        
+    //     }
+    //     if(ratioUpdate){
+    //         ratioUpdate = false;
+    //         if(VSIDS){
+    //             p_branch = vsids_predict_logistic_regression(learnt_ratio,origin_ratio,avgLearntLBD);
+    //             //p = drand(random_seed);
+    //             //printf("p_branch:%.2f\n",p_branch);
+    //             if(p_branch >= fix_p){                    
+    //                 changeBranch();
+    //                 phase_allotment += phase_allotment / 10;
+    //             }   
+    //         }else{
+    //             p_branch = lrb_predict_logistic_regression(learnt_ratio,origin_ratio,avgLearntLBD);
+    //             //p = drand(random_seed);
+    //             //printf("p_branch:%.2f\n",p_branch);
+    //             if((1-p_branch) >= fix_p){                    
+    //                 changeBranch();
+    //                 phase_allotment += phase_allotment / 10;
+    //             }
+    //         }   
+    //     }        
+    // }
+    nbVivify = 0;
+    uint64_t branchLimit = 1;
     // Search:
     int curr_restarts = 0;
-    while(status == l_Undef && !isTimeOut()){
-        int weighted = phase_allotment;
-        while (status == l_Undef && weighted > 0 /*&& withinBudget()*/&& !isTimeOut()){
-            if (VSIDS){
-                status = search(weighted);
-            }else{
-                int nof_conflicts = luby(restart_inc, curr_restarts) * restart_first;
-                curr_restarts++;
-                weighted -= nof_conflicts;
-                status = search(nof_conflicts);
-            }                        
+    while (status == l_Undef /*&& withinBudget()*/&& !isTimeOut()){
+        if (VSIDS){
+            int weighted = INT32_MAX;
+            status = search(weighted);
+        }else{
+            int nof_conflicts = luby(restart_inc, curr_restarts) * restart_first;
+            curr_restarts++;
+            status = search(nof_conflicts);
         }
-        if(ratioUpdate){
+        if(ratioUpdate && nbVivify >= branchLimit){
             ratioUpdate = false;
+            nbVivify = 0;
+            branchLimit = branchLimit << 1;
             if(VSIDS){
                 p_branch = vsids_predict_logistic_regression(learnt_ratio,origin_ratio,avgLearntLBD);
-                //p = drand(random_seed);
-                //printf("p_branch:%.2f\n",p_branch);
-                if(p_branch >= fix_p){                    
+                if(p_branch >= fix_vsids){                    
                     changeBranch();
-                    phase_allotment += phase_allotment / 10;
                 }   
             }else{
                 p_branch = lrb_predict_logistic_regression(learnt_ratio,origin_ratio,avgLearntLBD);
-                //p = drand(random_seed);
-                //printf("p_branch:%.2f\n",p_branch);
-                if((1-p_branch) >= fix_p){                    
+                if((1-p_branch) >= fix_lrb){                    
                     changeBranch();
-                    phase_allotment += phase_allotment / 10;
                 }
             }   
-        }        
+        }  
     }
-    
     if (verbosity >= 1)
         printf("c ===============================================================================\n");
     
