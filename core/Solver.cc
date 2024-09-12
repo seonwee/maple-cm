@@ -2081,17 +2081,18 @@ lbool Solver::solve_()
         }
         if(ratioUpdate && nbVivify >= branchLimit){
             ratioUpdate = false;
-            nbVivify = 0;
-            branchLimit = branchLimit << 1;
+            nbVivify = 0;            
             if(VSIDS){
                 p_branch = vsids_predict_logistic_regression(learnt_ratio,origin_ratio,avgLearntLBD);
                 if(p_branch >= fix_crafted){                    
                     changeBranch();
+                    branchLimit = branchLimit << 1;
                 }   
             }else{
                 p_branch = lrb_predict_logistic_regression(learnt_ratio,origin_ratio,avgLearntLBD);
                 if((1-p_branch) >= fix_industry){                    
                     changeBranch();
+                    branchLimit = branchLimit << 1;
                 }
             }   
         }  
