@@ -2018,8 +2018,8 @@ lbool Solver::solve_()
     }
     double p_branch;
     //double p;
-    double fix_vsids = 0.6;
-    double fix_lrb = 0.4;
+    double fix_vsids = 0.4;
+    double fix_lrb = 0.6;
     VSIDS = true;
     int init = 10000;
     while (status == l_Undef && init > 0 /*&& withinBudget()*/&& !isTimeOut())
