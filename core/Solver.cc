@@ -721,6 +721,11 @@ bool Solver::simplifyAll()
     avgLearntLBD = nbLearntClause == 0 ? 0 :(double)sumLearntLBD / (double)nbLearntClause;
     sumLearntLBD = 0;
     nbLearntClause = 0;
+
+    sumAvgLearntLBD += avgLearntLBD;
+    sumLearntRatio += learnt_ratio;
+    sumOriginRatio += origin_ratio;
+    nbVivify++;
     //printf("%u %u\n",origin_original_length_record,origin_simplified_length_record);
     return true;
 }
@@ -1716,8 +1721,7 @@ lbool Solver::search(int& nof_conflicts)
     // simplify
     //
     if (conflicts >= curSimplify * nbconfbeforesimplify){
-        nbSimplifyAll++;
-        nbVivify++;
+        nbSimplifyAll++;        
 //        printf("c ### simplifyAll %llu on conflict : %lld and restart: %lld\n",  nbSimplifyAll, conflicts, starts);
         if (!simplifyAll()){
             return l_False;
@@ -1979,6 +1983,14 @@ double lrb_predict_logistic_regression(double learnt_ratio, double origin_ratio,
     return 1.0 / (1.0 + exp(-z));
 }
 
+void Solver::calculate(){
+    avgLearntRatio = sumLearntRatio / (double)nbVivify;
+    avgOriginRatio = sumOriginRatio / (double)nbVivify;
+    avgAvgLearntLBD = sumAvgLearntLBD / (double)nbVivify;
+    sumLearntRatio = 0;
+    sumOriginRatio = 0;
+    sumAvgLearntLBD = 0;
+}
 // NOTE: assumptions passed in member-variable 'assumptions'.
 lbool Solver::solve_()
 {
@@ -2025,8 +2037,8 @@ lbool Solver::solve_()
     while (status == l_Undef && init > 0 /*&& withinBudget()*/&& !isTimeOut())
         status = search(init);
     printf("c It will be possible to change the branching strategy.\n");
-    p_branch = vsids_predict_logistic_regression(learnt_ratio,origin_ratio,avgLearntLBD);
-    //p = drand(random_seed);
+    calculate();
+    p_branch = vsids_predict_logistic_regression(avgLearntRatio,avgOriginRatio,avgAvgLearntLBD);
     if(p_branch >= fix_crafted){
         changeBranch();
     }           
@@ -2067,6 +2079,7 @@ lbool Solver::solve_()
     //     }        
     // }
     nbVivify = 0;
+    ratioUpdate = false;
     uint64_t branchLimit = 1;
     // Search:
     int curr_restarts = 0;
@@ -2081,15 +2094,16 @@ lbool Solver::solve_()
         }
         if(ratioUpdate && nbVivify >= branchLimit){
             ratioUpdate = false;
-            nbVivify = 0;            
+            nbVivify = 0;
+            calculate();            
             if(VSIDS){
-                p_branch = vsids_predict_logistic_regression(learnt_ratio,origin_ratio,avgLearntLBD);
+                p_branch = vsids_predict_logistic_regression(avgLearntRatio,avgOriginRatio,avgAvgLearntLBD);
                 if(p_branch >= fix_crafted){                    
                     changeBranch();
                     branchLimit = branchLimit << 1;
                 }   
             }else{
-                p_branch = lrb_predict_logistic_regression(learnt_ratio,origin_ratio,avgLearntLBD);
+                p_branch = lrb_predict_logistic_regression(avgLearntRatio,avgOriginRatio,avgAvgLearntLBD);
                 if((1-p_branch) >= fix_industry){                    
                     changeBranch();
                     branchLimit = branchLimit << 1;

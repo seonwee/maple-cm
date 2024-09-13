@@ -428,6 +428,7 @@ public:
     uint64_t s_propagations;
     //-------------------difference---------------------
     void changeBranch();
+    void calculate();
     double origin_ratio;
     double learnt_ratio;
     uint64_t nbVivify = 0;
@@ -435,6 +436,13 @@ public:
     uint64_t sumLearntLBD = 0;
     uint64_t nbLearntClause = 0;
     double avgLearntLBD = 0;
+
+    double sumOriginRatio = 0;
+    double avgOriginRatio = 0;
+    double sumLearntRatio = 0;
+    double avgLearntRatio = 0;
+    double sumAvgLearntLBD = 0;
+    double avgAvgLearntLBD = 0;
     //-------------------difference---------------------
     vec<Lit> simp_learnt_clause;
     // vec<CRef> simp_reason_clause;
