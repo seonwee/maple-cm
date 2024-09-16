@@ -1936,6 +1936,12 @@ void Solver::changeBranch(){
     VSIDS = !VSIDS;        
 }
 
+// 定义特征数量
+#define NUM_FEATURES 5
+
+// 定义多项式特征数量（5个原始特征的2次多项式特征）
+#define NUM_POLY_FEATURES 20
+
 // 定义概率结构体
 typedef struct {
     double negative_class;
