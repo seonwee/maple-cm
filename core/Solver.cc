@@ -721,6 +721,11 @@ bool Solver::simplifyAll()
     avgLearntLBD = nbLearntClause == 0 ? 0 :(double)sumLearntLBD / (double)nbLearntClause;
     sumLearntLBD = 0;
     nbLearntClause = 0;
+
+    sumAvgLearntLBD += avgLearntLBD;
+    sumLearntRatio += learnt_ratio;
+    sumOriginRatio += origin_ratio;
+    nbVivify++;
     //printf("%u %u\n",origin_original_length_record,origin_simplified_length_record);
     return true;
 }
@@ -1716,8 +1721,7 @@ lbool Solver::search(int& nof_conflicts)
     // simplify
     //
     if (conflicts >= curSimplify * nbconfbeforesimplify){
-        nbSimplifyAll++;
-        nbVivify++;
+        nbSimplifyAll++;        
 //        printf("c ### simplifyAll %llu on conflict : %lld and restart: %lld\n",  nbSimplifyAll, conflicts, starts);
         if (!simplifyAll()){
             return l_False;
@@ -2151,6 +2155,7 @@ lbool Solver::solve_()
     //     }        
     // }
     nbVivify = 0;
+    ratioUpdate = false;
     uint64_t branchLimit = 1;
     // Search:
     int curr_restarts = 0;
@@ -2165,7 +2170,8 @@ lbool Solver::solve_()
         }
         if(ratioUpdate && nbVivify >= branchLimit){
             ratioUpdate = false;
-            nbVivify = 0;            
+            nbVivify = 0;
+            calculate();            
             if(VSIDS){
                 prob = vsids_predict_proba(learnt_ratio,origin_ratio,avgLearntLBD,reduce_var_ratio,reduce_cls_raito);
                 if(prob.positive_class > fix_crafted){                    
