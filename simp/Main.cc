@@ -186,7 +186,8 @@ int main(int argc, char** argv)
         if (S.verbosity > 0){
             printf("c |  Number of variables:  %12d                                         |\n", S.nVars());
             printf("c |  Number of clauses:    %12d                                         |\n", S.nClauses()); }
-        
+        S.vars_init = S.nVars();
+        S.clauses_init = S.nClauses();
         double parsed_time = cpuTime();
         if (S.verbosity > 0)
             printf("c |  Parse time:           %12.2f s                                       |\n", parsed_time - initial_time);

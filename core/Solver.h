@@ -435,6 +435,11 @@ public:
     uint64_t sumLearntLBD = 0;
     uint64_t nbLearntClause = 0;
     double avgLearntLBD = 0;
+    int vars_init = 0;
+    int clauses_init = 0;
+    double reduce_var_ratio = 0;
+    double reduce_cls_raito = 0;
+    bool first_eliminate = true;
     //-------------------difference---------------------
     vec<Lit> simp_learnt_clause;
     // vec<CRef> simp_reason_clause;

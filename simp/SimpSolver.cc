@@ -657,7 +657,11 @@ bool SimpSolver::eliminate(bool turn_off_elim)
     n_vars = nFreeVars();
 
     printf("c Reduced to %d vars, %d cls (grow=%d)\n", n_vars, n_cls, grow);
-
+    if(first_eliminate){
+        reduce_var_ratio = (double)(vars_init - n_vars) / (double)vars_init * 100;
+        reduce_cls_raito = (double)(clauses_init - n_cls) / (double)clauses_init * 100 ;
+        first_eliminate = false;
+    }    
     if ((double)n_cls / n_vars >= 10 || n_vars < 10000){
         printf("c No iterative elimination performed. (vars=%d, c/v ratio=%.1f)\n", n_vars, (double)n_cls / n_vars);
         goto cleanup; }
