@@ -2170,8 +2170,7 @@ lbool Solver::solve_()
         }
         if(ratioUpdate && nbVivify >= branchLimit){
             ratioUpdate = false;
-            nbVivify = 0;
-            calculate();            
+            nbVivify = 0;           
             if(VSIDS){
                 prob = vsids_predict_proba(learnt_ratio,origin_ratio,avgLearntLBD,reduce_var_ratio,reduce_cls_raito);
                 if(prob.positive_class > fix_crafted){                    

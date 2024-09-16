@@ -428,7 +428,6 @@ public:
     uint64_t s_propagations;
     //-------------------difference---------------------
     void changeBranch();
-    void calculate();
     double origin_ratio;
     double learnt_ratio;
     uint64_t nbVivify = 0;
