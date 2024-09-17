@@ -1935,148 +1935,79 @@ void Solver::changeBranch(){
     VSIDS = !VSIDS;        
 }
 
-// 定义特征数量
-#define NUM_FEATURES 5
-
-// 定义多项式特征数量（5个原始特征的2次多项式特征）
-#define NUM_POLY_FEATURES 20
-
-// 定义概率结构体
-typedef struct {
-    double negative_class;
-    double positive_class;
-} Probabilities;
-
-// 计算概率的辅助函数
-double sigmoid(double x) {
+// 定义sigmoid函数
+static double sigmoid(double x) {
     return 1.0 / (1.0 + exp(-x));
 }
-double poly_features[NUM_POLY_FEATURES];
-// 返回两个类别的概率
-Probabilities lrb_predict_proba(double learnt_ratio, double origin_ratio, double avgLearntLBD, 
-                            double reduce_var_ratio, double reduce_cls_ratio) {    
-    // 步骤1：创建多项式特征
-    // double poly_features[NUM_POLY_FEATURES];
-    int idx = 0;
-    
-    // 原始特征
-    poly_features[idx++] = learnt_ratio;
-    poly_features[idx++] = origin_ratio;
-    poly_features[idx++] = avgLearntLBD;
-    poly_features[idx++] = reduce_var_ratio;
-    poly_features[idx++] = reduce_cls_ratio;
-    
-    // 二次项
-    poly_features[idx++] = learnt_ratio * learnt_ratio;
-    poly_features[idx++] = origin_ratio * origin_ratio;
-    poly_features[idx++] = avgLearntLBD * avgLearntLBD;
-    poly_features[idx++] = reduce_var_ratio * reduce_var_ratio;
-    poly_features[idx++] = reduce_cls_ratio * reduce_cls_ratio;
-    
-    // 交互项
-    poly_features[idx++] = learnt_ratio * origin_ratio;
-    poly_features[idx++] = learnt_ratio * avgLearntLBD;
-    poly_features[idx++] = learnt_ratio * reduce_var_ratio;
-    poly_features[idx++] = learnt_ratio * reduce_cls_ratio;
-    poly_features[idx++] = origin_ratio * avgLearntLBD;
-    poly_features[idx++] = origin_ratio * reduce_var_ratio;
-    poly_features[idx++] = origin_ratio * reduce_cls_ratio;
-    poly_features[idx++] = avgLearntLBD * reduce_var_ratio;
-    poly_features[idx++] = avgLearntLBD * reduce_cls_ratio;
-    poly_features[idx++] = reduce_var_ratio * reduce_cls_ratio;
 
-    // 步骤2：标准化
-    const static double scaler_mean[NUM_POLY_FEATURES] = {15.856, 1.2009999999999998, 28.859937310333333, 34.163333333333334, 19.170166666666667, 373.39536333333336, 28.252446666666664, 543.4260859824647, 568.5186466666668, 299.26612, 3.8360933333333334, 41.939702382749665, 46.03754166666668, 25.679919999999992, 1898.813217099061, 920.5516133659228, 422.39518204244104, 1568.78519, 859.8674633333334, 568.6709283333333};
-    const static double scaler_scale[NUM_POLY_FEATURES] = {11.044574565520092, 1.547156208446107, 32.648387947074674, 20.041253592416705, 14.183639811612377, 678.2670777410463, 56.471365059811404, 1688.2557320041228, 543.0472943855302, 324.139673623202, 9.737678253222834, 125.79849901181387, 60.56426248559539, 39.67284273247381, 6308.057342719739, 1100.6613446872768, 340.18859137413074, 1457.8792243872358, 931.8899790344491, 721.9693214143172};
+// 逻辑回归分类函数
+static double vsids_logistic_regression_classify(double learnt_ratio, double origin_ratio, double avgLearntLBD,
+    double reduce_var_ratio, double reduce_cls_ratio) {
+    // 定义权重和截距
+    const static double weights[] = { -1.2332995405119114, -0.29278730843619305, -0.3042636997572107, -0.48854532598839295, -0.46056091000182686};
+    const static double intercept = -0.5001429358902746;
 
-    for (int i = 0; i < NUM_POLY_FEATURES; i++) {
-        poly_features[i] = (poly_features[i] - scaler_mean[i]) / scaler_scale[i];
+    // 定义标准化参数
+    const static double means[] = { 18.34133333333333, 1.294, 18.139115668916663, 34.16333333333333, 19.170166666666674 };
+    const static double scales[] = { 12.834114495705924, 1.636981164623873, 15.333846468557443, 20.041253592416712, 14.183639811612377 };
+
+    // 标准化输入特征
+    double features[] = {
+        (learnt_ratio - means[0]) / scales[0],
+        (origin_ratio - means[1]) / scales[1],
+        (avgLearntLBD - means[2]) / scales[2],
+        (reduce_var_ratio - means[3]) / scales[3],
+        (reduce_cls_ratio - means[4]) / scales[4]
+    };
+
+    // 计算线性组合
+    double linear_combination = intercept;
+    for (int i = 0; i < 5; i++) {
+        linear_combination += weights[i] * features[i];
     }
 
-    // 步骤3：应用SVM分类器
-    const static double svm_coefficients[NUM_POLY_FEATURES] = {-1.7954258165964911, 0.41534361709397477, -4.832021105733046, -7.388283744434063, 3.5159164659176243, 0.021500441399915242, 0.4007108374638103, -2.7133996366807573, 0.47395863359864726, 2.5071408668461763, 0.13737059638726357, -1.9516118800447662, 4.649563850010563, -7.732304649193352, 3.7704825694066684, 4.4155466591286805, -0.24534373223484277, 10.530568430859066, -17.54282565844337, 9.251364661304502};
-    const static double svm_intercept = -0.011788176305454708;
-
-    double decision_function = 0.0;
-    for (int i = 0; i < NUM_POLY_FEATURES; i++) {
-        decision_function += svm_coefficients[i] * poly_features[i];
-    }
-    decision_function += svm_intercept;
-
-    // 使用sigmoid函数将决策函数值转换为概率
-    double positive_prob = sigmoid(decision_function);
-    
-    Probabilities probs;
-    probs.positive_class = positive_prob;
-    probs.negative_class = 1.0 - positive_prob;
-    printf("lrb classifier learnt_ratio: %.2lf origin_ratio: %.2lf avgLearntLBD: %.2lf var_ratio: %.2lf cls_ratio: %.2lf\n",
-    learnt_ratio,origin_ratio,avgLearntLBD,reduce_var_ratio,reduce_cls_ratio);
-    printf("crafted: %.2lf industry: %.2lf\n",probs.positive_class,probs.negative_class);
-    return probs;
+    // 应用sigmoid函数并分类
+    double probability = sigmoid(linear_combination);
+    printf("vsids_logistic learnt_ratio: %.2lf origin_ratio: %.2lf avgLearntLBD: %.2lf reduce_var_ratio: %.2lf reduce_cls_ratio: %.2lf\n",
+    learnt_ratio, origin_ratio, avgLearntLBD,reduce_var_ratio, reduce_cls_ratio);
+    printf("probability: %.2lf\n",probability);
+    // 如果概率大于0.5，分类为1，否则为0
+    return probability;
 }
-// 返回两个类别的概率
-Probabilities vsids_predict_proba(double learnt_ratio, double origin_ratio, double avgLearntLBD, 
-                            double reduce_var_ratio, double reduce_cls_ratio) {
-    // 步骤1：创建多项式特征
-    //double poly_features[NUM_POLY_FEATURES];
-    int idx = 0;
-    
-    // 原始特征
-    poly_features[idx++] = learnt_ratio;
-    poly_features[idx++] = origin_ratio;
-    poly_features[idx++] = avgLearntLBD;
-    poly_features[idx++] = reduce_var_ratio;
-    poly_features[idx++] = reduce_cls_ratio;
-    
-    // 二次项
-    poly_features[idx++] = learnt_ratio * learnt_ratio;
-    poly_features[idx++] = origin_ratio * origin_ratio;
-    poly_features[idx++] = avgLearntLBD * avgLearntLBD;
-    poly_features[idx++] = reduce_var_ratio * reduce_var_ratio;
-    poly_features[idx++] = reduce_cls_ratio * reduce_cls_ratio;
-    
-    // 交互项
-    poly_features[idx++] = learnt_ratio * origin_ratio;
-    poly_features[idx++] = learnt_ratio * avgLearntLBD;
-    poly_features[idx++] = learnt_ratio * reduce_var_ratio;
-    poly_features[idx++] = learnt_ratio * reduce_cls_ratio;
-    poly_features[idx++] = origin_ratio * avgLearntLBD;
-    poly_features[idx++] = origin_ratio * reduce_var_ratio;
-    poly_features[idx++] = origin_ratio * reduce_cls_ratio;
-    poly_features[idx++] = avgLearntLBD * reduce_var_ratio;
-    poly_features[idx++] = avgLearntLBD * reduce_cls_ratio;
-    poly_features[idx++] = reduce_var_ratio * reduce_cls_ratio;
+// 逻辑回归分类函数
+static double lrb_logistic_regression_classify(double learnt_ratio, double origin_ratio, double avgLearntLBD,
+    double reduce_var_ratio, double reduce_cls_ratio) {
+    // 定义权重和截距
+    const static double weights[] = { -0.1579571067346505, -0.607198057889193, 0.08974565906159064, -0.6633568299076446, -0.21093042720818259};
+    const static double intercept = -0.29560608791581344;
 
-    // 步骤2：标准化
-    const static double scaler_mean[NUM_POLY_FEATURES] = {18.34133333333333, 1.2939999999999998, 18.139115668916663, 34.163333333333334, 19.170166666666667, 501.1190033333333, 38.76565000000001, 366.6738658469698, 667.1936266666667, 354.014495, 4.354143333333334, 26.75075506692867, 53.03886833333333, 29.182016666666666, 564.1543647716297, 593.9091671992982, 298.180090049571, 1568.78519, 859.8674633333334, 568.6709283333333};
-    const static double scaler_scale[NUM_POLY_FEATURES] = {12.834114495705924, 1.6369811646238737, 15.333846468557441, 20.041253592416705, 14.183639811612377, 850.6608059444957, 75.45509509995222, 1068.7930684282505, 639.9399172302238, 406.5071591830347, 9.18342631816264, 85.36619740070267, 76.86609254000209, 48.217278440679905, 1519.4402063729679, 525.6436957020157, 256.8875397226487, 1457.8792243872358, 931.8899790344491, 721.9693214143172};
+    // 定义标准化参数
+    const static double means[] = { 15.856, 1.2009999999999998, 28.859937310333326, 34.16333333333333, 19.170166666666674 };
+    const static double scales[] = { 11.044574565520092, 1.5471562084461075, 32.64838794707467, 20.041253592416712, 14.183639811612377 };
 
-    for (int i = 0; i < NUM_POLY_FEATURES; i++) {
-        poly_features[i] = (poly_features[i] - scaler_mean[i]) / scaler_scale[i];
+    // 标准化输入特征
+    double features[] = {
+        (learnt_ratio - means[0]) / scales[0],
+        (origin_ratio - means[1]) / scales[1],
+        (avgLearntLBD - means[2]) / scales[2],
+        (reduce_var_ratio - means[3]) / scales[3],
+        (reduce_cls_ratio - means[4]) / scales[4]
+    };
+
+    // 计算线性组合
+    double linear_combination = intercept;
+    for (int i = 0; i < 5; i++) {
+        linear_combination += weights[i] * features[i];
     }
 
-    // 步骤3：应用SVM分类器
-    const static double svm_coefficients[NUM_POLY_FEATURES] = {-0.8614452229645588, 0.3406989447353217, 0.7250237947347841, -1.946409441997962, 0.987440959780698, -1.9246581366469913, 0.08536272869993829, 0.5269476210153745, 0.2130538317523109, -0.0553463363441792, 0.12343645608215015, 0.45785007935994504, -0.3577200520179724, -1.5523411566154643, 0.5948103435094245, -1.2945188844060251, -0.8285423681865213, 4.084604611742662, -3.3032947552746283, 1.936117856199135};
-    const static double svm_intercept = -0.27528450254358106;
-
-    double decision_function = 0.0;
-    for (int i = 0; i < NUM_POLY_FEATURES; i++) {
-        decision_function += svm_coefficients[i] * poly_features[i];
-    }
-    decision_function += svm_intercept;
-
-    // 使用sigmoid函数将决策函数值转换为概率
-    double positive_prob = sigmoid(decision_function);
-    
-    Probabilities probs;
-    probs.positive_class = positive_prob;
-    probs.negative_class = 1.0 - positive_prob;
-    printf("vsids classifier learnt_ratio: %.2lf origin_ratio: %.2lf avgLearntLBD: %.2lf var_ratio: %.2lf cls_ratio: %.2lf\n",
-    learnt_ratio,origin_ratio,avgLearntLBD,reduce_var_ratio,reduce_cls_ratio);
-    printf("crafted: %.2lf industry: %.2lf\n",probs.positive_class,probs.negative_class);
-    return probs;
+    // 应用sigmoid函数并分类
+    double probability = sigmoid(linear_combination);
+    printf("lrb_logistic learnt_ratio: %.2lf origin_ratio: %.2lf avgLearntLBD: %.2lf reduce_var_ratio: %.2lf reduce_cls_ratio: %.2lf\n",
+    learnt_ratio, origin_ratio, avgLearntLBD,reduce_var_ratio, reduce_cls_ratio);
+    printf("probability: %.2lf\n",probability);
+    // 如果概率大于0.5，分类为1，否则为0
+    return probability;
 }
-
 void Solver::calculateAvg(){
     //printf("nbVivify: %d\n",nbVivify);
     avgLearntRatio = sumLearntRatio / (double)nbVivify;
@@ -2124,18 +2055,17 @@ lbool Solver::solve_()
 #endif
         return l_False;
     }
-    Probabilities prob;
-    //double p;
+    double p;
     double fix_industry = 0.5;
-    double fix_crafted = 0.5;
+    double fix_crafted = 1.0 - fix_industry;
     VSIDS = true;
     int init = 10000;
     while (status == l_Undef && init > 0 /*&& withinBudget()*/&& !isTimeOut())
         status = search(init);
     printf("c It will be possible to change the branching strategy.\n");
     calculateAvg();
-    prob = vsids_predict_proba(avgLearntRatio,avgOriginRatio,avgAvgLearntLBD,reduce_var_ratio,reduce_cls_raito);
-    if(prob.positive_class > fix_crafted){
+    p = vsids_logistic_regression_classify(avgLearntRatio,avgOriginRatio,avgAvgLearntLBD,reduce_var_ratio,reduce_cls_raito);
+    if(p >= fix_crafted){
         changeBranch();
     }           
     // int phase_allotment = 10000;
@@ -2193,15 +2123,15 @@ lbool Solver::solve_()
             calculateAvg();
             nbVivify = 0;           
             if(VSIDS){
-                prob = vsids_predict_proba(avgLearntRatio,avgOriginRatio,avgAvgLearntLBD,reduce_var_ratio,reduce_cls_raito);
-                if(prob.positive_class > fix_crafted){                    
+                p = vsids_logistic_regression_classify(avgLearntRatio,avgOriginRatio,avgAvgLearntLBD,reduce_var_ratio,reduce_cls_raito);
+                if(p >= fix_crafted){                    
                     changeBranch();
                     branchLimit = branchLimit << 1;
                     printf("branchLimit: %d\n",branchLimit);
                 }   
             }else{
-                prob = lrb_predict_proba(avgLearntRatio,avgOriginRatio,avgAvgLearntLBD,reduce_var_ratio,reduce_cls_raito);
-                if(prob.negative_class > fix_industry){                    
+                p = lrb_logistic_regression_classify(avgLearntRatio,avgOriginRatio,avgAvgLearntLBD,reduce_var_ratio,reduce_cls_raito);
+                if((1.0 - p) >= fix_industry){                    
                     changeBranch();
                     branchLimit = branchLimit << 1;
                     printf("branchLimit: %d\n",branchLimit);
