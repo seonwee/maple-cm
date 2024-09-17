@@ -2064,7 +2064,8 @@ lbool Solver::solve_()
         status = search(init);
     printf("c It will be possible to change the branching strategy.\n");
     calculateAvg();
-    p = vsids_logistic_regression_classify(avgLearntRatio,avgOriginRatio,avgAvgLearntLBD,reduce_var_ratio,reduce_cls_raito);
+    //p = vsids_logistic_regression_classify(avgLearntRatio,avgOriginRatio,avgAvgLearntLBD,reduce_var_ratio,reduce_cls_raito);
+    p = vsids_logistic_regression_classify(learnt_ratio,origin_ratio,avgLearntLBD,reduce_var_ratio,reduce_cls_raito);
     if(p >= fix_crafted){
         changeBranch();
     }           
@@ -2123,14 +2124,14 @@ lbool Solver::solve_()
             calculateAvg();
             nbVivify = 0;           
             if(VSIDS){
-                p = vsids_logistic_regression_classify(avgLearntRatio,avgOriginRatio,avgAvgLearntLBD,reduce_var_ratio,reduce_cls_raito);
+                p = vsids_logistic_regression_classify(learnt_ratio,origin_ratio,avgLearntLBD,reduce_var_ratio,reduce_cls_raito);
                 if(p >= fix_crafted){                    
                     changeBranch();
                     branchLimit = branchLimit << 1;
                     printf("branchLimit: %d\n",branchLimit);
                 }   
             }else{
-                p = lrb_logistic_regression_classify(avgLearntRatio,avgOriginRatio,avgAvgLearntLBD,reduce_var_ratio,reduce_cls_raito);
+                p = lrb_logistic_regression_classify(learnt_ratio,origin_ratio,avgLearntLBD,reduce_var_ratio,reduce_cls_raito);
                 if((1.0 - p) >= fix_industry){                    
                     changeBranch();
                     branchLimit = branchLimit << 1;
