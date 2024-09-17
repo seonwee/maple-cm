@@ -722,6 +722,9 @@ bool Solver::simplifyAll()
     sumLearntLBD = 0;
     nbLearntClause = 0;
     nbVivify++;
+    sumAvgLearntLBD += avgLearntLBD;
+    sumLearntRatio += learnt_ratio;
+    sumOriginRatio += origin_ratio;
     //printf("%u %u\n",origin_original_length_record,origin_simplified_length_record);
     return true;
 }
@@ -1951,7 +1954,7 @@ double sigmoid(double x) {
 double poly_features[NUM_POLY_FEATURES];
 // 返回两个类别的概率
 Probabilities lrb_predict_proba(double learnt_ratio, double origin_ratio, double avgLearntLBD, 
-                            double reduce_var_ratio, double reduce_cls_ratio) {
+                            double reduce_var_ratio, double reduce_cls_ratio) {    
     // 步骤1：创建多项式特征
     // double poly_features[NUM_POLY_FEATURES];
     int idx = 0;
@@ -2006,7 +2009,9 @@ Probabilities lrb_predict_proba(double learnt_ratio, double origin_ratio, double
     Probabilities probs;
     probs.positive_class = positive_prob;
     probs.negative_class = 1.0 - positive_prob;
-    printf("lrb classifier crafted: %.2lf industry: %.2lf\n",probs.positive_class,probs.negative_class);
+    printf("lrb classifier learnt_ratio: %.2lf origin_ratio: %.2lf avgLearntLBD: %.2lf var_ratio: %.2lf cls_ratio: %.2lf\n",
+    learnt_ratio,origin_ratio,avgLearntLBD,reduce_var_ratio,reduce_cls_ratio);
+    printf("crafted: %.2lf industry: %.2lf\n",probs.positive_class,probs.negative_class);
     return probs;
 }
 // 返回两个类别的概率
@@ -2066,9 +2071,22 @@ Probabilities vsids_predict_proba(double learnt_ratio, double origin_ratio, doub
     Probabilities probs;
     probs.positive_class = positive_prob;
     probs.negative_class = 1.0 - positive_prob;
-    printf("vsids classifier crafted: %.2lf industry: %.2lf\n",probs.positive_class,probs.negative_class);
+    printf("vsids classifier learnt_ratio: %.2lf origin_ratio: %.2lf avgLearntLBD: %.2lf var_ratio: %.2lf cls_ratio: %.2lf\n",
+    learnt_ratio,origin_ratio,avgLearntLBD,reduce_var_ratio,reduce_cls_ratio);
+    printf("crafted: %.2lf industry: %.2lf\n",probs.positive_class,probs.negative_class);
     return probs;
 }
+
+void Solver::calculateAvg(){
+    //printf("nbVivify: %d\n",nbVivify);
+    avgLearntRatio = sumLearntRatio / (double)nbVivify;
+    sumLearntRatio = 0;
+    avgOriginRatio = sumOriginRatio / (double)nbVivify;
+    sumOriginRatio = 0;
+    avgAvgLearntLBD = sumAvgLearntLBD / (double)nbVivify;
+    sumAvgLearntLBD = 0;
+}
+
 // NOTE: assumptions passed in member-variable 'assumptions'.
 lbool Solver::solve_()
 {
@@ -2115,8 +2133,8 @@ lbool Solver::solve_()
     while (status == l_Undef && init > 0 /*&& withinBudget()*/&& !isTimeOut())
         status = search(init);
     printf("c It will be possible to change the branching strategy.\n");
-    prob = vsids_predict_proba(learnt_ratio,origin_ratio,avgLearntLBD,reduce_var_ratio,reduce_cls_raito);
-    //p = drand(random_seed);
+    calculateAvg();
+    prob = vsids_predict_proba(avgLearntRatio,avgOriginRatio,avgAvgLearntLBD,reduce_var_ratio,reduce_cls_raito);
     if(prob.positive_class > fix_crafted){
         changeBranch();
     }           
@@ -2172,16 +2190,17 @@ lbool Solver::solve_()
         }
         if(ratioUpdate && nbVivify >= branchLimit){
             ratioUpdate = false;
+            calculateAvg();
             nbVivify = 0;           
             if(VSIDS){
-                prob = vsids_predict_proba(learnt_ratio,origin_ratio,avgLearntLBD,reduce_var_ratio,reduce_cls_raito);
+                prob = vsids_predict_proba(avgLearntRatio,avgOriginRatio,avgAvgLearntLBD,reduce_var_ratio,reduce_cls_raito);
                 if(prob.positive_class > fix_crafted){                    
                     changeBranch();
                     branchLimit = branchLimit << 1;
                     printf("branchLimit: %d\n",branchLimit);
                 }   
             }else{
-                prob = lrb_predict_proba(learnt_ratio,origin_ratio,avgLearntLBD,reduce_var_ratio,reduce_cls_raito);
+                prob = lrb_predict_proba(avgLearntRatio,avgOriginRatio,avgAvgLearntLBD,reduce_var_ratio,reduce_cls_raito);
                 if(prob.negative_class > fix_industry){                    
                     changeBranch();
                     branchLimit = branchLimit << 1;

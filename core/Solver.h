@@ -440,6 +440,13 @@ public:
     double reduce_var_ratio = 0;
     double reduce_cls_raito = 0;
     bool first_eliminate = true;
+    double sumOriginRatio = 0;
+    double avgOriginRatio = 0;
+    double sumLearntRatio = 0;
+    double avgLearntRatio = 0;
+    double sumAvgLearntLBD = 0;
+    double avgAvgLearntLBD = 0;    
+    void calculateAvg();
     //-------------------difference---------------------
     vec<Lit> simp_learnt_clause;
     // vec<CRef> simp_reason_clause;
