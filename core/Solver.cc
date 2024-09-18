@@ -751,15 +751,17 @@ bool Solver::simplifyAll()
     nbBacktracks = 0;
     sumBacktrackLength = 0;
 
-    // printf("avgLearntLBD:%.2f avgVivifiedSize:%.2f avgVivifiedLearntSize:%.2f avgVivifiedOriginSize:%.2f avgUpAfterDecide:%.2f avgVivifiedLBD:%.2f avgVivifiedLearntLBD:%.2f avgVivifiedOriginLBD:%.2f\n",
-    // avgLearntLBD,avgVivifiedSize,
-    // avgVivifiedLearntSize,avgVivifiedOriginSize,
-    // avgUpAfterDecide,avgVivifiedLBD,
-    // avgVivifiedLearntLBD,avgVivifiedOriginLBD
-    // );
-
-    printf("avgLearntLBD:%.2f avgLearntSize:%.2f avgUpAfterDecide:%.2f avgBacktrackLength:%.2f\n",
-    avgLearntLBD,avgLearntSize,avgUpAfterDecide,avgBacktrackLength
+    conflictIndex = nbConflict == 0 ? 0 : (double)sumConflictLevelLiterals / (double)nbConflict;
+    sumConflictLevelLiterals = 0;
+    nbConflict = 0;
+    printf("avgLearntLBD:%.2lf avgVivifiedSize:%.2lf avgVivifiedLearntSize:%.2lf avgVivifiedOriginSize:%.2lf\navgUpAfterDecide:%.2lf avgVivifiedLBD:%.2lf avgVivifiedLearntLBD:%.2lf avgVivifiedOriginLBD:%.2lf\n",
+    avgLearntLBD,avgVivifiedSize,
+    avgVivifiedLearntSize,avgVivifiedOriginSize,
+    avgUpAfterDecide,avgVivifiedLBD,
+    avgVivifiedLearntLBD,avgVivifiedOriginLBD
+    );
+    printf("avgLearntSize:%.2lf avgBacktrackLength:%.2lf conflictIndex:%.2lf\n",
+    avgLearntSize,avgBacktrackLength,conflictIndex
     );
     return true;
 }
@@ -1213,7 +1215,7 @@ void Solver::analyze(CRef confl, vec<Lit>& out_learnt, int& out_btlevel, int& ou
     
     int saved;
     saved = usedClauses.size();
-    
+    nbConflict++;
     do{
         assert(confl != CRef_Undef); // (otherwise should be UIP)
         Clause& c = ca[confl];
@@ -1283,7 +1285,7 @@ void Solver::analyze(CRef confl, vec<Lit>& out_learnt, int& out_btlevel, int& ou
         confl = reason(var(p));
         seen[var(p)] = 0;
         pathC--;
-        
+        sumConflictLevelLiterals++;
     }while (pathC > 0);
     out_learnt[0] = ~p;
     
