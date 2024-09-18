@@ -475,6 +475,10 @@ public:
     uint64_t sumBacktrackLength = 0;
     uint64_t nbBacktracks = 0;
     double avgBacktrackLength = 0;
+
+    uint64_t sumConflictLevelLiterals = 0;
+    uint64_t nbConflict = 0;
+    double conflictIndex = 0;
 };
 
 
