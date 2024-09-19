@@ -428,13 +428,10 @@ public:
     uint64_t s_propagations;
     //-------------------difference---------------------
     void changeBranch();
-    double origin_ratio;
-    double learnt_ratio;
+    double origin_ratio = 0;
+    double learnt_ratio = 0;
     uint64_t nbVivify = 0;
     bool ratioUpdate = false;
-    uint64_t sumLearntLBD = 0;
-    uint64_t nbLearntClause = 0;
-    double avgLearntLBD = 0;
     int vars_init = 0;
     int clauses_init = 0;
     double reduce_var_ratio = 0;

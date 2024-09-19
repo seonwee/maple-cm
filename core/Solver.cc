@@ -155,11 +155,6 @@ Solver::Solver() :
   , curSimplify(1)
   , nbconfbeforesimplify(1000)
   , incSimplify(1000)
-
-
-  //difference
-  , origin_ratio(0)
-  , learnt_ratio(0)
 {}
 
 
@@ -700,26 +695,26 @@ bool Solver::simplifyAll()
     checkGarbage();
     
     ////
-    printf("c size_reduce_ratio            : %4.2f%%\n",
-            original_length_record == 0 ? 
-            0 : 
-            (original_length_record - simplified_length_record) * 100 / 
-            (double)original_length_record);
+    // printf("c size_reduce_ratio            : %4.2f%%\n",
+    //         original_length_record == 0 ? 
+    //         0 : 
+    //         (original_length_record - simplified_length_record) * 100 / 
+    //         (double)original_length_record);
 
-    printf("c learnt size_reduce_ratio     : %4.2f%%\n",
-            learnt_original_length_record == 0 ? 
-            0 : 
-            (learnt_original_length_record - learnt_simplified_length_record) * 100 / 
-            (double)learnt_original_length_record);
+    // printf("c learnt size_reduce_ratio     : %4.2f%%\n",
+    //         learnt_original_length_record == 0 ? 
+    //         0 : 
+    //         (learnt_original_length_record - learnt_simplified_length_record) * 100 / 
+    //         (double)learnt_original_length_record);
     learnt_ratio = learnt_original_length_record == 0 ? 
             0 : 
             (learnt_original_length_record - learnt_simplified_length_record) * 100 / 
             (double)learnt_original_length_record;
-    printf("c origin size_reduce_ratio     : %4.2f%%\n",
-            origin_original_length_record == 0 ? 
-            0 : 
-            (origin_original_length_record - origin_simplified_length_record) * 100 / 
-            (double)origin_original_length_record);
+    // printf("c origin size_reduce_ratio     : %4.2f%%\n",
+    //         origin_original_length_record == 0 ? 
+    //         0 : 
+    //         (origin_original_length_record - origin_simplified_length_record) * 100 / 
+    //         (double)origin_original_length_record);
     origin_ratio = origin_original_length_record == 0 ? 
             0 : 
             (origin_original_length_record - origin_simplified_length_record) * 100 / 
@@ -774,15 +769,15 @@ bool Solver::simplifyAll()
     conflictIndex = nbConflict == 0 ? 0 : (double)sumConflictLevelLiterals / (double)nbConflict;
     sumConflictLevelLiterals = 0;
     nbConflict = 0;
-    printf("avgLearntLBD:%.2lf avgVivifiedSize:%.2lf avgVivifiedLearntSize:%.2lf avgVivifiedOriginSize:%.2lf\navgUpAfterDecide:%.2lf avgVivifiedLBD:%.2lf avgVivifiedLearntLBD:%.2lf avgVivifiedOriginLBD:%.2lf\n",
-    avgLearntLBD,avgVivifiedSize,
-    avgVivifiedLearntSize,avgVivifiedOriginSize,
-    avgUpAfterDecide,avgVivifiedLBD,
-    avgVivifiedLearntLBD,avgVivifiedOriginLBD
-    );
-    printf("avgLearntSize:%.2lf avgBacktrackLength:%.2lf conflictIndex:%.2lf\n",
-    avgLearntSize,avgBacktrackLength,conflictIndex
-    );
+    // printf("avgLearntLBD:%.2lf avgVivifiedSize:%.2lf avgVivifiedLearntSize:%.2lf avgVivifiedOriginSize:%.2lf\navgUpAfterDecide:%.2lf avgVivifiedLBD:%.2lf avgVivifiedLearntLBD:%.2lf avgVivifiedOriginLBD:%.2lf\n",
+    // avgLearntLBD,avgVivifiedSize,
+    // avgVivifiedLearntSize,avgVivifiedOriginSize,
+    // avgUpAfterDecide,avgVivifiedLBD,
+    // avgVivifiedLearntLBD,avgVivifiedOriginLBD
+    // );
+    // printf("avgLearntSize:%.2lf avgBacktrackLength:%.2lf conflictIndex:%.2lf\n",
+    // avgLearntSize,avgBacktrackLength,conflictIndex
+    // );
     return true;
 }
 
@@ -1998,72 +1993,66 @@ static double sigmoid(double x) {
 }
 
 // 逻辑回归分类函数
-static double vsids_logistic_regression_classify(double learnt_ratio, double origin_ratio, double avgLearntLBD,
-    double reduce_var_ratio, double reduce_cls_ratio) {
+//'reduceVarRatio', 'learnt.1', 'avgLearntLBD.1', 'avgLearntSize.1', 'avgBacktrackLength.1', 'conflictIndex.1'
+static double vsids_logistic_regression_classify(double* features,int n) {
     // 定义权重和截距
-    const static double weights[] = { -1.2332995405119114, -0.29278730843619305, -0.3042636997572107, -0.48854532598839295, -0.46056091000182686};
-    const static double intercept = -0.5001429358902746;
+    const static double weights[] = { -0.78309154, -1.29688358 ,-0.32691313 ,-0.19436462  ,0.25121072 ,-0.46002441 };
+    const static double intercept = -0.47552071;
 
     // 定义标准化参数
-    const static double means[] = { 18.34133333333333, 1.294, 18.139115668916663, 34.16333333333333, 19.170166666666674 };
-    const static double scales[] = { 12.834114495705924, 1.636981164623873, 15.333846468557443, 20.041253592416712, 14.183639811612377 };
+    const static double means[] = { 34.16310665 ,18.34133333,18.12860424,119.14195146 ,15.16871875,  81.48853058 };
+    const static double scales[] = { 20.04075778 ,12.8341145 ,15.32533665,536.99809867 ,30.48139, 289.806939 };
 
     // 标准化输入特征
-    double features[] = {
-        (learnt_ratio - means[0]) / scales[0],
-        (origin_ratio - means[1]) / scales[1],
-        (avgLearntLBD - means[2]) / scales[2],
-        (reduce_var_ratio - means[3]) / scales[3],
-        (reduce_cls_ratio - means[4]) / scales[4]
-    };
-
+    for (int i = 0; i < n; i++) {
+        features[i] = (features[i] - means[i]) / scales[i];
+    }
     // 计算线性组合
     double linear_combination = intercept;
-    for (int i = 0; i < 5; i++) {
+    for (int i = 0; i < n; i++) {
         linear_combination += weights[i] * features[i];
     }
 
     // 应用sigmoid函数并分类
     double probability = sigmoid(linear_combination);
-    printf("vsids_logistic learnt_ratio: %.2lf origin_ratio: %.2lf avgLearntLBD: %.2lf reduce_var_ratio: %.2lf reduce_cls_ratio: %.2lf\n",
-    learnt_ratio, origin_ratio, avgLearntLBD,reduce_var_ratio, reduce_cls_ratio);
-    printf("probability: %.2lf\n",probability);
+
     // 如果概率大于0.5，分类为1，否则为0
-    return probability;
+    return probability > 0.5 ? 1 : 0;
 }
 // 逻辑回归分类函数
-static double lrb_logistic_regression_classify(double learnt_ratio, double origin_ratio, double avgLearntLBD,
-    double reduce_var_ratio, double reduce_cls_ratio) {
+//'learnt', 'origin', 'avgLearntLBD', 'avgVivifiedSize', 'avgUpAfterDecide', 'avgVivifiedLBD', 'avgBacktrackLength', 'conflictIndex'
+static double lrb_logistic_regression_classify(double* features,int n) {
     // 定义权重和截距
-    const static double weights[] = { -0.1579571067346505, -0.607198057889193, 0.08974565906159064, -0.6633568299076446, -0.21093042720818259};
-    const static double intercept = -0.29560608791581344;
+    const static double weights[] = { 0.01942556,-0.99984964,-0.09963827,-0.85580324,-0.74517383,-0.63967973,0.18918792 ,-1.40260156 };
+    const static double intercept = -0.58839864;
 
     // 定义标准化参数
-    const static double means[] = { 15.856, 1.2009999999999998, 28.859937310333326, 34.16333333333333, 19.170166666666674 };
-    const static double scales[] = { 11.044574565520092, 1.5471562084461075, 32.64838794707467, 20.041253592416712, 14.183639811612377 };
+    const static double means[] = { 15.856, 1.201, 28.93759529, 14.01728288, 801.67627138,5.15650602,10.20667925,138.30852731 };
+    const static double scales[] = { 1.10445746e+01,1.54715621e+00,3.27259055e+01,1.63868279e+01,
+    1.62028052e+03,1.91204576e+00,2.31310462e+01,3.90339255e+02 };
 
     // 标准化输入特征
-    double features[] = {
+    /*double features[] = {
         (learnt_ratio - means[0]) / scales[0],
         (origin_ratio - means[1]) / scales[1],
         (avgLearntLBD - means[2]) / scales[2],
         (reduce_var_ratio - means[3]) / scales[3],
         (reduce_cls_ratio - means[4]) / scales[4]
-    };
-
+    };*/
+    for (int i = 0; i < n; i++) {
+        features[i] = (features[i] - means[i]) / scales[i];
+    }
     // 计算线性组合
     double linear_combination = intercept;
-    for (int i = 0; i < 5; i++) {
+    for (int i = 0; i < n; i++) {
         linear_combination += weights[i] * features[i];
     }
 
     // 应用sigmoid函数并分类
     double probability = sigmoid(linear_combination);
-    printf("lrb_logistic learnt_ratio: %.2lf origin_ratio: %.2lf avgLearntLBD: %.2lf reduce_var_ratio: %.2lf reduce_cls_ratio: %.2lf\n",
-    learnt_ratio, origin_ratio, avgLearntLBD,reduce_var_ratio, reduce_cls_ratio);
-    printf("probability: %.2lf\n",probability);
+
     // 如果概率大于0.5，分类为1，否则为0
-    return probability;
+    return probability > 0.5 ? 1 : 0;
 }
 void Solver::calculateAvg(){
     //printf("nbVivify: %d\n",nbVivify);
@@ -2122,7 +2111,17 @@ lbool Solver::solve_()
     printf("c It will be possible to change the branching strategy.\n");
     calculateAvg();
     //p = vsids_logistic_regression_classify(avgLearntRatio,avgOriginRatio,avgAvgLearntLBD,reduce_var_ratio,reduce_cls_raito);
-    p = vsids_logistic_regression_classify(learnt_ratio,origin_ratio,avgLearntLBD,reduce_var_ratio,reduce_cls_raito);
+    const int vsids_n = 6;
+    const int lrb_n = 8;
+    double vsids_features[vsids_n];
+    double lrb_features[lrb_n];
+    vsids_features[0] = reduce_var_ratio;
+    vsids_features[1] = learnt_ratio;
+    vsids_features[2] = avgLearntLBD;
+    vsids_features[3] = avgLearntSize;
+    vsids_features[4] = avgBacktrackLength;
+    vsids_features[5] = conflictIndex;
+    p = vsids_logistic_regression_classify(vsids_features,vsids_n);
     if(p >= fix_crafted){
         changeBranch();
     }           
@@ -2181,14 +2180,28 @@ lbool Solver::solve_()
             calculateAvg();
             nbVivify = 0;           
             if(VSIDS){
-                p = vsids_logistic_regression_classify(learnt_ratio,origin_ratio,avgLearntLBD,reduce_var_ratio,reduce_cls_raito);
+                vsids_features[0] = reduce_var_ratio;
+                vsids_features[1] = learnt_ratio;
+                vsids_features[2] = avgLearntLBD;
+                vsids_features[3] = avgLearntSize;
+                vsids_features[4] = avgBacktrackLength;
+                vsids_features[5] = conflictIndex;
+                p = vsids_logistic_regression_classify(vsids_features,vsids_n);
                 if(p >= fix_crafted){                    
                     changeBranch();
                     branchLimit = branchLimit << 1;
                     printf("branchLimit: %d\n",branchLimit);
                 }   
             }else{
-                p = lrb_logistic_regression_classify(learnt_ratio,origin_ratio,avgLearntLBD,reduce_var_ratio,reduce_cls_raito);
+                lrb_features[0] = learnt_ratio;
+                lrb_features[1] = origin_ratio;
+                lrb_features[2] = avgLearntLBD;
+                lrb_features[3] = avgVivifiedSize;
+                lrb_features[4] = avgUpAfterDecide;
+                lrb_features[5] = avgVivifiedLBD;
+                lrb_features[6] = avgBacktrackLength;
+                lrb_features[7] = conflictIndex;
+                p = lrb_logistic_regression_classify(lrb_features,lrb_n);
                 if((1.0 - p) >= fix_industry){                    
                     changeBranch();
                     branchLimit = branchLimit << 1;
