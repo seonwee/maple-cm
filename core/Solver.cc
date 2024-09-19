@@ -2015,7 +2015,7 @@ static double vsids_logistic_regression_classify(double* features,int n) {
 
     // 应用sigmoid函数并分类
     double probability = sigmoid(linear_combination);
-
+    printf("vsids logic predict probability:%.2lf\n",probability);
     // 如果概率大于0.5，分类为1，否则为0
     return probability > 0.5 ? 1 : 0;
 }
@@ -2050,7 +2050,7 @@ static double lrb_logistic_regression_classify(double* features,int n) {
 
     // 应用sigmoid函数并分类
     double probability = sigmoid(linear_combination);
-
+    printf("lrb logic predict probability:%.2lf\n",probability);
     // 如果概率大于0.5，分类为1，否则为0
     return probability > 0.5 ? 1 : 0;
 }
