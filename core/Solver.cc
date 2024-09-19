@@ -496,10 +496,17 @@ bool Solver::simplifyLearnt(Clause& c, CRef cr, vec<Lit>& lits,bool isLearnt) {
         cancelUntilTrailRecord();
         
         simplified_length_record += lits.size();
+        int lbd = computeLBD(lits);
         if(isLearnt){
+            nbVivifiedLearnts++;
+            sumVivifiedLearntSize += lits.size();
             learnt_simplified_length_record += lits.size();
+            sumVivifiedLearntLBD += lbd;
         }else{
             origin_simplified_length_record += lits.size();
+            nbVivifiedOrigins++;
+            sumVivifiedOriginSize += lits.size();
+            sumVivifiedOriginLBD += lbd;
         }        
         return true;
     }
@@ -726,6 +733,56 @@ bool Solver::simplifyAll()
     sumLearntRatio += learnt_ratio;
     sumOriginRatio += origin_ratio;
     //printf("%u %u\n",origin_original_length_record,origin_simplified_length_record);
+
+    avgLearntSize = nbLearntClause == 0 ? 0 :(double)sumLearntSize / (double)nbLearntClause;
+    sumLearntSize = 0;
+
+    avgLearntLBD = nbLearntClause == 0 ? 0 :(double)sumLearntLBD / (double)nbLearntClause;
+    sumLearntLBD = 0;
+    nbLearntClause = 0;
+
+    avgVivifiedSize = (nbVivifiedLearnts+nbVivifiedOrigins) == 0 ? 0 :
+                    (double)(sumVivifiedLearntSize + sumVivifiedOriginSize) /
+                    (double)(nbVivifiedLearnts + nbVivifiedOrigins);
+
+    avgVivifiedLBD = (nbVivifiedLearnts+nbVivifiedOrigins) == 0 ? 0 :
+                    (double)(sumVivifiedLearntLBD + sumVivifiedOriginLBD) /
+                    (double)(nbVivifiedLearnts + nbVivifiedOrigins);
+    
+    avgVivifiedLearntLBD = nbVivifiedLearnts == 0 ? 0 : (double)sumVivifiedLearntLBD / (double)nbVivifiedLearnts;
+    sumVivifiedLearntLBD = 0;
+
+    avgVivifiedOriginLBD = nbVivifiedOrigins == 0 ? 0 : (double)sumVivifiedOriginLBD / (double)nbVivifiedOrigins;
+    sumVivifiedOriginLBD = 0;
+
+    avgVivifiedLearntSize = nbVivifiedLearnts == 0 ? 0 : (double)sumVivifiedLearntSize / (double)nbVivifiedLearnts;
+    sumVivifiedLearntSize = 0;
+    nbVivifiedLearnts = 0;
+
+    avgVivifiedOriginSize = nbVivifiedOrigins == 0 ? 0 : (double)sumVivifiedOriginSize / (double)nbVivifiedOrigins;
+    sumVivifiedOriginSize = 0;
+    nbVivifiedOrigins = 0;
+
+    avgUpAfterDecide = nbDecide == 0 ? 0 : (double)sumUpAfterDecide / (double)nbDecide;
+    sumUpAfterDecide = 0;
+    nbDecide = 0;
+
+    avgBacktrackLength = nbBacktracks == 0 ? 0 : (double)sumBacktrackLength / (double)nbBacktracks;
+    nbBacktracks = 0;
+    sumBacktrackLength = 0;
+
+    conflictIndex = nbConflict == 0 ? 0 : (double)sumConflictLevelLiterals / (double)nbConflict;
+    sumConflictLevelLiterals = 0;
+    nbConflict = 0;
+    printf("avgLearntLBD:%.2lf avgVivifiedSize:%.2lf avgVivifiedLearntSize:%.2lf avgVivifiedOriginSize:%.2lf\navgUpAfterDecide:%.2lf avgVivifiedLBD:%.2lf avgVivifiedLearntLBD:%.2lf avgVivifiedOriginLBD:%.2lf\n",
+    avgLearntLBD,avgVivifiedSize,
+    avgVivifiedLearntSize,avgVivifiedOriginSize,
+    avgUpAfterDecide,avgVivifiedLBD,
+    avgVivifiedLearntLBD,avgVivifiedOriginLBD
+    );
+    printf("avgLearntSize:%.2lf avgBacktrackLength:%.2lf conflictIndex:%.2lf\n",
+    avgLearntSize,avgBacktrackLength,conflictIndex
+    );
     return true;
 }
 
@@ -1081,6 +1138,8 @@ bool Solver::satisfied(const Clause& c) const {
 //
 void Solver::cancelUntil(int level) {
     if (decisionLevel() > level){
+        sumBacktrackLength += decisionLevel() - level + 1;
+        nbBacktracks++;
         for (int c = trail.size()-1; c >= trail_lim[level]; c--){
             Var      x  = var(trail[c]);
             if (!VSIDS){
@@ -1181,7 +1240,7 @@ void Solver::analyze(CRef confl, vec<Lit>& out_learnt, int& out_btlevel, int& ou
     
     int saved;
     saved = usedClauses.size();
-    
+    nbConflict++;
     do{
         assert(confl != CRef_Undef); // (otherwise should be UIP)
         Clause& c = ca[confl];
@@ -1251,7 +1310,7 @@ void Solver::analyze(CRef confl, vec<Lit>& out_learnt, int& out_btlevel, int& ou
         confl = reason(var(p));
         seen[var(p)] = 0;
         pathC--;
-        
+        sumConflictLevelLiterals++;
     }while (pathC > 0);
     out_learnt[0] = ~p;
     
@@ -1499,7 +1558,7 @@ CRef Solver::propagate()
         vec<Watcher>&  ws  = watches[p];
         Watcher        *i, *j, *end;
         num_props++;
-        
+        sumUpAfterDecide++;
         vec<Watcher>& ws_bin = watches_bin[p];  // Propagate binary clauses first.
         for (int k = 0; k < ws_bin.size(); k++){
             Lit the_other = ws_bin[k].blocker;
@@ -1748,8 +1807,6 @@ lbool Solver::search(int& nof_conflicts)
             cancelUntil(backtrack_level);
             
             lbd--;
-            sumLearntLBD += lbd;
-            nbLearntClause++;
             if (VSIDS){
                 cached = false;
                 conflicts_VSIDS++;
@@ -1847,7 +1904,7 @@ lbool Solver::search(int& nof_conflicts)
                 // New variable decision:
                 decisions++;
                 next = pickBranchLit();
-
+                nbDecide++;
                 if (next == lit_Undef)
                     // Model found:
                     return l_True;

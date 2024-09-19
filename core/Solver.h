@@ -463,6 +463,43 @@ public:
 
     bool simplifyUsedOriginalClauses();
 
+    // Additional parameters are used to distinguish between industrial and crafted instances
+    uint64_t sumLearntLBD = 0;
+    uint64_t nbLearntClause = 0;
+    double avgLearntLBD = 0;
+
+    uint64_t sumVivifiedLearntSize = 0;
+    uint64_t nbVivifiedLearnts = 0;
+    double avgVivifiedLearntSize = 0;
+
+    uint64_t sumVivifiedOriginSize = 0;
+    uint64_t nbVivifiedOrigins = 0;
+    double avgVivifiedOriginSize = 0;
+
+    double avgVivifiedSize = 0;
+
+    uint64_t sumUpAfterDecide = 0;
+    uint64_t nbDecide = 0;
+    double avgUpAfterDecide = 0;
+
+    double avgVivifiedLBD = 0;
+
+    uint64_t sumVivifiedLearntLBD = 0;
+    double avgVivifiedLearntLBD = 0;
+
+    uint64_t sumVivifiedOriginLBD = 0;
+    double avgVivifiedOriginLBD = 0;
+
+    uint64_t sumLearntSize = 0;
+    double avgLearntSize = 0;
+
+    uint64_t sumBacktrackLength = 0;
+    uint64_t nbBacktracks = 0;
+    double avgBacktrackLength = 0;
+
+    uint64_t sumConflictLevelLiterals = 0;
+    uint64_t nbConflict = 0;
+    double conflictIndex = 0;
 };
 
 
