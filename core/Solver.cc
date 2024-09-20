@@ -2100,10 +2100,11 @@ lbool Solver::solve_()
         if (drup_file) binDRUP_flush(drup_file);
 #endif
         return l_False;
-    }
+    }    
     double p;
     double fix_industry = 0.5;
     double fix_crafted = 1.0 - fix_industry;
+    double randomBranchChangeProb = 0.2;
     VSIDS = true;
     int init = 10000;
     while (status == l_Undef && init > 0 /*&& withinBudget()*/&& !isTimeOut())
@@ -2160,9 +2161,10 @@ lbool Solver::solve_()
     //             }
     //         }   
     //     }        
-    // }
+    // }    
     nbVivify = 0;
     ratioUpdate = false;
+    bool isBranchChange = false;
     uint64_t branchLimit = 1;
     // Search:
     int curr_restarts = 0;
@@ -2177,6 +2179,7 @@ lbool Solver::solve_()
         }
         if(ratioUpdate && nbVivify >= branchLimit){
             ratioUpdate = false;
+            isBranchChange = false;
             calculateAvg();
             nbVivify = 0;           
             if(VSIDS){
@@ -2191,7 +2194,8 @@ lbool Solver::solve_()
                     changeBranch();
                     branchLimit = branchLimit << 1;
                     printf("branchLimit: %d\n",branchLimit);
-                }   
+                    isBranchChange = true;
+                }
             }else{
                 lrb_features[0] = learnt_ratio;
                 lrb_features[1] = origin_ratio;
@@ -2206,8 +2210,16 @@ lbool Solver::solve_()
                     changeBranch();
                     branchLimit = branchLimit << 1;
                     printf("branchLimit: %d\n",branchLimit);
+                    isBranchChange = true;
                 }
-            }   
+            }
+            if(!isBranchChange){
+                p = drand(random_seed);
+                if(p < randomBranchChangeProb){
+                    printf("random change branch with probability: %.2lf\n",p);
+                    changeBranch();
+                }                              
+            }
         }  
     }
     if (verbosity >= 1)
