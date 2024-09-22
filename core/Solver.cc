@@ -2015,7 +2015,7 @@ int vsids_logistic_regression_classify(double* features, int n) {
 
     // 应用sigmoid函数并分类
     double probability = sigmoid(linear_combination);
-
+    printf("vsids logic predict probability:%.2lf\n",probability);
     // 如果概率大于0.5，分类为1，否则为0
     return probability > 0.5 ? 1 : 0;
 }
@@ -2071,8 +2071,8 @@ lbool Solver::solve_()
         std::thread t(sleep, 2500);
         t.detach();
     #else
-        // signal(SIGALRM, SIGALRM_switch);
-        // alarm(2500);//2500
+        signal(SIGALRM, SIGALRM_switch);
+        alarm(2500);//2500
     #endif
     
     model.clear(); usedClauses.clear();
@@ -2209,7 +2209,7 @@ lbool Solver::solve_()
                     isBranchChange = true;
                 }
             }
-            if(!isBranchChange){
+            if(!isBranchChange && switch_mode){
                 p = drand(random_seed);
                 if(p < randomBranchChangeProb){
                     printf("random change branch with probability: %.2lf\n",p);
