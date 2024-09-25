@@ -2053,7 +2053,7 @@ static double lrb_logistic_regression_classify(double* features,int n) {
 
     // 应用sigmoid函数并分类
     double probability = sigmoid(linear_combination);
-
+    printf("lrb logic predict probability:%.2lf\n",1.0 - probability);
     // 如果概率大于0.5，分类为1，否则为0
     return probability;
 }
@@ -2126,9 +2126,7 @@ lbool Solver::solve_()
     vsids_features[4] = avgBacktrackLength;
     vsids_features[5] = conflictIndex;
     p_branch = vsids_logistic_regression_classify(vsids_features,vsids_n);
-    p = drand(random_seed);
-    printf("%.2lf <= %.2lf %d\n",p,p_branch,p<=p_branch);
-    if(p <= p_branch){
+    if(p_branch >= 0.5){
         changeBranch();
     }           
     // int phase_allotment = 10000;
@@ -2169,8 +2167,11 @@ lbool Solver::solve_()
     // }    
     nbVivify = 0;
     ratioUpdate = false;
-    bool isBranchChange = false;
-    uint64_t branchLimit = 1;
+    double luby_y = 2.0;
+    int luby_x = 0;
+    // bool isBranchChange = false;
+    // uint64_t branchLimit = 1;
+    uint64_t branchLimit = luby(luby_y,luby_x++);
     // Search:
     int curr_restarts = 0;
     while (status == l_Undef /*&& withinBudget()*/&& !isTimeOut()){
@@ -2184,10 +2185,10 @@ lbool Solver::solve_()
         }
         if(ratioUpdate && nbVivify >= branchLimit){
             ratioUpdate = false;
-            isBranchChange = false;
+            // isBranchChange = false;
             calculateAvg();
             nbVivify = 0;
-            p = drand(random_seed);  
+            p = drand(random_seed);              
             if(VSIDS){
                 vsids_features[0] = reduce_var_ratio;
                 vsids_features[1] = learnt_ratio;
@@ -2196,13 +2197,14 @@ lbool Solver::solve_()
                 vsids_features[4] = avgBacktrackLength;
                 vsids_features[5] = conflictIndex;
                 p_branch = vsids_logistic_regression_classify(vsids_features,vsids_n);
-                //printf("drand()->: %.2lf\n",p);
-                printf("%.2lf <= %.2lf %d\n",p,p_branch,p<=p_branch);
+                printf("drand(): %.2lf\n",p);
+                //printf("%.2lf <= %.2lf %d\n",p,p_branch,p<=p_branch);
                 if(p <= p_branch){                    
                     changeBranch();
-                    branchLimit = branchLimit << 1;
+                    branchLimit = luby(luby_y,luby_x++);
+                    // branchLimit = branchLimit << 1;
                     printf("branchLimit: %d\n",branchLimit);
-                    isBranchChange = true;
+                    // isBranchChange = true;
                 }
             }else{
                 lrb_features[0] = learnt_ratio;
@@ -2214,22 +2216,23 @@ lbool Solver::solve_()
                 lrb_features[6] = avgBacktrackLength;
                 lrb_features[7] = conflictIndex;
                 p_branch = lrb_logistic_regression_classify(lrb_features,lrb_n);
-                //printf("drand()->: %.2lf\n",p);
-                printf("%.2lf <= %.2lf %d\n",p,1.0 - p_branch,p<=(1.0 - p_branch));
+                printf("drand(): %.2lf\n",p);
+                //printf("%.2lf <= %.2lf %d\n",p,1.0 - p_branch,p<=(1.0 - p_branch));
                 if(p <= (1.0 - p_branch)){                    
                     changeBranch();
-                    branchLimit = branchLimit << 1;
+                    branchLimit = luby(luby_y,luby_x++);
+                    // branchLimit = branchLimit << 1;
                     printf("branchLimit: %d\n",branchLimit);
-                    isBranchChange = true;
+                    // isBranchChange = true;
                 }
             }
-            if(!isBranchChange){
-                p = drand(random_seed);
-                if(p < randomBranchChangeProb){
-                    printf("random change branch with probability: %.2lf\n",p);
-                    changeBranch();
-                }                              
-            }
+            // if(!isBranchChange){
+            //     p = drand(random_seed);
+            //     if(p < randomBranchChangeProb){
+            //         printf("random change branch with probability: %.2lf\n",p);
+            //         changeBranch();
+            //     }                              
+            // }
         }  
     }
     if (verbosity >= 1)
