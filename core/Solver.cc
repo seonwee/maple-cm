@@ -769,15 +769,15 @@ bool Solver::simplifyAll()
     conflictIndex = nbConflict == 0 ? 0 : (double)sumConflictLevelLiterals / (double)nbConflict;
     sumConflictLevelLiterals = 0;
     nbConflict = 0;
-    // printf("avgLearntLBD:%.2lf avgVivifiedSize:%.2lf avgVivifiedLearntSize:%.2lf avgVivifiedOriginSize:%.2lf\navgUpAfterDecide:%.2lf avgVivifiedLBD:%.2lf avgVivifiedLearntLBD:%.2lf avgVivifiedOriginLBD:%.2lf\n",
-    // avgLearntLBD,avgVivifiedSize,
-    // avgVivifiedLearntSize,avgVivifiedOriginSize,
-    // avgUpAfterDecide,avgVivifiedLBD,
-    // avgVivifiedLearntLBD,avgVivifiedOriginLBD
-    // );
-    // printf("avgLearntSize:%.2lf avgBacktrackLength:%.2lf conflictIndex:%.2lf\n",
-    // avgLearntSize,avgBacktrackLength,conflictIndex
-    // );
+    printf("avgLearntLBD:%.2lf avgVivifiedSize:%.2lf avgVivifiedLearntSize:%.2lf avgVivifiedOriginSize:%.2lf\navgUpAfterDecide:%.2lf avgVivifiedLBD:%.2lf avgVivifiedLearntLBD:%.2lf avgVivifiedOriginLBD:%.2lf\n",
+    avgLearntLBD,avgVivifiedSize,
+    avgVivifiedLearntSize,avgVivifiedOriginSize,
+    avgUpAfterDecide,avgVivifiedLBD,
+    avgVivifiedLearntLBD,avgVivifiedOriginLBD
+    );
+    printf("avgLearntSize:%.2lf avgBacktrackLength:%.2lf conflictIndex:%.2lf\n",
+    avgLearntSize,avgBacktrackLength,conflictIndex
+    );
     return true;
 }
 
@@ -1802,6 +1802,9 @@ lbool Solver::search(int& nof_conflicts)
             cancelUntil(backtrack_level);
             
             lbd--;
+            sumLearntLBD += lbd;
+            nbLearntClause++;
+            sumLearntSize += learnt_clause.size();
             if (VSIDS){
                 cached = false;
                 conflicts_VSIDS++;
