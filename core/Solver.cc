@@ -1996,12 +1996,12 @@ static double sigmoid(double x) {
 //'reduceVarRatio', 'learnt.1', 'avgLearntLBD.1', 'avgLearntSize.1', 'avgBacktrackLength.1', 'conflictIndex.1'
 static double vsids_logistic_regression_classify(double* features,int n) {
     // 定义权重和截距
-    const static double weights[] = { -0.40021802,0.69017358,-0.7282474,0.23321544 };
-    const static double intercept = -0.222855;
+    const static double weights[] = { -0.78309154, -1.29688358 ,-0.32691313 ,-0.19436462  ,0.25121072 ,-0.46002441 };
+    const static double intercept = -0.47552071;
 
     // 定义标准化参数
-    const static double means[] = { 511.78404202 , 5.57726683, 6.61055743 , 15.16871875 };
-    const static double scales[] = { 980.78639678 , 2.64962543 , 3.08623799 ,30.48139 };
+    const static double means[] = { 34.16310665 ,18.34133333,18.12860424,119.14195146 ,15.16871875,  81.48853058 };
+    const static double scales[] = { 20.04075778 ,12.8341145 ,15.32533665,536.99809867 ,30.48139, 289.806939 };
 
     // 标准化输入特征
     for (int i = 0; i < n; i++) {
@@ -2015,7 +2015,7 @@ static double vsids_logistic_regression_classify(double* features,int n) {
 
     // 应用sigmoid函数并分类
     double probability = sigmoid(linear_combination);
-
+    printf("vsids logic predict probability:%.2lf\n",probability);
     // 如果概率大于0.5，分类为1，否则为0
     return probability > 0.5 ? 1 : 0;
 }
@@ -2112,14 +2112,16 @@ lbool Solver::solve_()
     printf("c It will be possible to change the branching strategy.\n");
     calculateAvg();
     //p = vsids_logistic_regression_classify(avgLearntRatio,avgOriginRatio,avgAvgLearntLBD,reduce_var_ratio,reduce_cls_raito);
-    const int vsids_n = 4;
+    const int vsids_n = 6;
     const int lrb_n = 8;
     double vsids_features[vsids_n];
     double lrb_features[lrb_n];
-    vsids_features[0] = avgUpAfterDecide;
-    vsids_features[1] = avgVivifiedLBD;
-    vsids_features[2] = avgVivifiedLearntLBD;
-    vsids_features[3] = avgBacktrackLength;
+    vsids_features[0] = reduce_var_ratio;
+    vsids_features[1] = learnt_ratio;
+    vsids_features[2] = avgLearntLBD;
+    vsids_features[3] = avgLearntSize;
+    vsids_features[4] = avgBacktrackLength;
+    vsids_features[5] = conflictIndex;
     p = vsids_logistic_regression_classify(vsids_features,vsids_n);
     if(p >= fix_crafted){
         changeBranch();
@@ -2208,8 +2210,16 @@ lbool Solver::solve_()
                     changeBranch();
                     branchLimit = branchLimit << 1;
                     printf("branchLimit: %d\n",branchLimit);
+                    isBranchChange = true;
                 }
-            }   
+            }
+            if(!isBranchChange){
+                p = drand(random_seed);
+                if(p < randomBranchChangeProb){
+                    printf("random change branch with probability: %.2lf\n",p);
+                    changeBranch();
+                }                              
+            }
         }  
     }
     if (verbosity >= 1)
