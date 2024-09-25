@@ -2053,7 +2053,7 @@ static double lrb_logistic_regression_classify(double* features,int n) {
 
     // 应用sigmoid函数并分类
     double probability = sigmoid(linear_combination);
-    printf("lrb logic predict probability:%.2lf\n",probability);
+
     // 如果概率大于0.5，分类为1，否则为0
     return probability;
 }
@@ -2107,6 +2107,7 @@ lbool Solver::solve_()
     double p,p_branch;
     double fix_industry = 0.5;
     double fix_crafted = 1.0 - fix_industry;
+    double randomBranchChangeProb = 0.2;
     VSIDS = true;
     int init = 10000;
     while (status == l_Undef && init > 0 /*&& withinBudget()*/&& !isTimeOut())
@@ -2165,9 +2166,10 @@ lbool Solver::solve_()
     //             }
     //         }   
     //     }        
-    // }
+    // }    
     nbVivify = 0;
     ratioUpdate = false;
+    bool isBranchChange = false;
     uint64_t branchLimit = 1;
     // Search:
     int curr_restarts = 0;
@@ -2182,6 +2184,7 @@ lbool Solver::solve_()
         }
         if(ratioUpdate && nbVivify >= branchLimit){
             ratioUpdate = false;
+            isBranchChange = false;
             calculateAvg();
             nbVivify = 0;
             p = drand(random_seed);  
@@ -2199,7 +2202,8 @@ lbool Solver::solve_()
                     changeBranch();
                     branchLimit = branchLimit << 1;
                     printf("branchLimit: %d\n",branchLimit);
-                }   
+                    isBranchChange = true;
+                }
             }else{
                 lrb_features[0] = learnt_ratio;
                 lrb_features[1] = origin_ratio;
@@ -2216,8 +2220,16 @@ lbool Solver::solve_()
                     changeBranch();
                     branchLimit = branchLimit << 1;
                     printf("branchLimit: %d\n",branchLimit);
+                    isBranchChange = true;
                 }
-            }   
+            }
+            if(!isBranchChange){
+                p = drand(random_seed);
+                if(p < randomBranchChangeProb){
+                    printf("random change branch with probability: %.2lf\n",p);
+                    changeBranch();
+                }                              
+            }
         }  
     }
     if (verbosity >= 1)
