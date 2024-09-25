@@ -1993,8 +1993,8 @@ static double sigmoid(double x) {
 }
 
 // 逻辑回归分类函数
-//'avgUpAfterDecide.1', 'avgVivifiedLBD.1', 'avgVivifiedLearntLBD.1', 'avgBacktrackLength.1'
-int vsids_logistic_regression_classify(double* features, int n) {
+//'reduceVarRatio', 'learnt.1', 'avgLearntLBD.1', 'avgLearntSize.1', 'avgBacktrackLength.1', 'conflictIndex.1'
+static double vsids_logistic_regression_classify(double* features,int n) {
     // 定义权重和截距
     const static double weights[] = { -0.40021802,0.69017358,-0.7282474,0.23321544 };
     const static double intercept = -0.222855;
@@ -2071,8 +2071,8 @@ lbool Solver::solve_()
         std::thread t(sleep, 2500);
         t.detach();
     #else
-        signal(SIGALRM, SIGALRM_switch);
-        alarm(2500);//2500
+        // signal(SIGALRM, SIGALRM_switch);
+        // alarm(2500);//2500
     #endif
     
     model.clear(); usedClauses.clear();
@@ -2100,10 +2100,11 @@ lbool Solver::solve_()
         if (drup_file) binDRUP_flush(drup_file);
 #endif
         return l_False;
-    }
+    }    
     double p;
     double fix_industry = 0.5;
     double fix_crafted = 1.0 - fix_industry;
+    double randomBranchChangeProb = 0.2;
     VSIDS = true;
     int init = 10000;
     while (status == l_Undef && init > 0 /*&& withinBudget()*/&& !isTimeOut())
@@ -2158,9 +2159,10 @@ lbool Solver::solve_()
     //             }
     //         }   
     //     }        
-    // }
+    // }    
     nbVivify = 0;
     ratioUpdate = false;
+    bool isBranchChange = false;
     uint64_t branchLimit = 1;
     // Search:
     int curr_restarts = 0;
@@ -2175,19 +2177,23 @@ lbool Solver::solve_()
         }
         if(ratioUpdate && nbVivify >= branchLimit){
             ratioUpdate = false;
+            isBranchChange = false;
             calculateAvg();
             nbVivify = 0;           
             if(VSIDS){
-                vsids_features[0] = avgUpAfterDecide;
-                vsids_features[1] = avgVivifiedLBD;
-                vsids_features[2] = avgVivifiedLearntLBD;
-                vsids_features[3] = avgBacktrackLength;
+                vsids_features[0] = reduce_var_ratio;
+                vsids_features[1] = learnt_ratio;
+                vsids_features[2] = avgLearntLBD;
+                vsids_features[3] = avgLearntSize;
+                vsids_features[4] = avgBacktrackLength;
+                vsids_features[5] = conflictIndex;
                 p = vsids_logistic_regression_classify(vsids_features,vsids_n);
                 if(p >= fix_crafted){                    
                     changeBranch();
                     branchLimit = branchLimit << 1;
                     printf("branchLimit: %d\n",branchLimit);
-                }   
+                    isBranchChange = true;
+                }
             }else{
                 lrb_features[0] = learnt_ratio;
                 lrb_features[1] = origin_ratio;
@@ -2202,16 +2208,8 @@ lbool Solver::solve_()
                     changeBranch();
                     branchLimit = branchLimit << 1;
                     printf("branchLimit: %d\n",branchLimit);
-                    isBranchChange = true;
                 }
-            }
-            if(!isBranchChange){
-                p = drand(random_seed);
-                if(p < randomBranchChangeProb){
-                    printf("random change branch with probability: %.2lf\n",p);
-                    changeBranch();
-                }                              
-            }
+            }   
         }  
     }
     if (verbosity >= 1)
