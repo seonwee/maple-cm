@@ -720,21 +720,21 @@ bool Solver::simplifyAll()
             (origin_original_length_record - origin_simplified_length_record) * 100 / 
             (double)origin_original_length_record;
     ratioUpdate = true;
-    avgLearntLBD = nbLearntClause == 0 ? 0 :(double)sumLearntLBD / (double)nbLearntClause;
-    sumLearntLBD = 0;
-    nbLearntClause = 0;
-    nbVivify++;
-    sumAvgLearntLBD += avgLearntLBD;
-    sumLearntRatio += learnt_ratio;
-    sumOriginRatio += origin_ratio;
-    //printf("%u %u\n",origin_original_length_record,origin_simplified_length_record);
-
     avgLearntSize = nbLearntClause == 0 ? 0 :(double)sumLearntSize / (double)nbLearntClause;
     sumLearntSize = 0;
 
     avgLearntLBD = nbLearntClause == 0 ? 0 :(double)sumLearntLBD / (double)nbLearntClause;
     sumLearntLBD = 0;
     nbLearntClause = 0;
+
+
+    nbVivify++;
+    sumAvgLearntLBD += avgLearntLBD;
+    sumLearntRatio += learnt_ratio;
+    sumOriginRatio += origin_ratio;
+    //printf("%u %u\n",origin_original_length_record,origin_simplified_length_record);
+
+    
 
     avgVivifiedSize = (nbVivifiedLearnts+nbVivifiedOrigins) == 0 ? 0 :
                     (double)(sumVivifiedLearntSize + sumVivifiedOriginSize) /
@@ -769,15 +769,15 @@ bool Solver::simplifyAll()
     conflictIndex = nbConflict == 0 ? 0 : (double)sumConflictLevelLiterals / (double)nbConflict;
     sumConflictLevelLiterals = 0;
     nbConflict = 0;
-    printf("avgLearntLBD:%.2lf avgVivifiedSize:%.2lf avgVivifiedLearntSize:%.2lf avgVivifiedOriginSize:%.2lf\navgUpAfterDecide:%.2lf avgVivifiedLBD:%.2lf avgVivifiedLearntLBD:%.2lf avgVivifiedOriginLBD:%.2lf\n",
-    avgLearntLBD,avgVivifiedSize,
-    avgVivifiedLearntSize,avgVivifiedOriginSize,
-    avgUpAfterDecide,avgVivifiedLBD,
-    avgVivifiedLearntLBD,avgVivifiedOriginLBD
-    );
-    printf("avgLearntSize:%.2lf avgBacktrackLength:%.2lf conflictIndex:%.2lf\n",
-    avgLearntSize,avgBacktrackLength,conflictIndex
-    );
+    // printf("avgLearntLBD:%.2lf avgVivifiedSize:%.2lf avgVivifiedLearntSize:%.2lf avgVivifiedOriginSize:%.2lf\navgUpAfterDecide:%.2lf avgVivifiedLBD:%.2lf avgVivifiedLearntLBD:%.2lf avgVivifiedOriginLBD:%.2lf\n",
+    // avgLearntLBD,avgVivifiedSize,
+    // avgVivifiedLearntSize,avgVivifiedOriginSize,
+    // avgUpAfterDecide,avgVivifiedLBD,
+    // avgVivifiedLearntLBD,avgVivifiedOriginLBD
+    // );
+    // printf("avgLearntSize:%.2lf avgBacktrackLength:%.2lf conflictIndex:%.2lf\n",
+    // avgLearntSize,avgBacktrackLength,conflictIndex
+    // );
     return true;
 }
 
@@ -2020,7 +2020,7 @@ static double vsids_logistic_regression_classify(double* features,int n) {
     double probability = sigmoid(linear_combination);
     printf("vsids logic predict probability:%.2lf\n",probability);
     // 如果概率大于0.5，分类为1，否则为0
-    return probability > 0.5 ? 1 : 0;
+    return probability;
 }
 // 逻辑回归分类函数
 //'learnt', 'origin', 'avgLearntLBD', 'avgVivifiedSize', 'avgUpAfterDecide', 'avgVivifiedLBD', 'avgBacktrackLength', 'conflictIndex'
@@ -2055,7 +2055,7 @@ static double lrb_logistic_regression_classify(double* features,int n) {
     double probability = sigmoid(linear_combination);
     printf("lrb logic predict probability:%.2lf\n",probability);
     // 如果概率大于0.5，分类为1，否则为0
-    return probability > 0.5 ? 1 : 0;
+    return probability;
 }
 void Solver::calculateAvg(){
     //printf("nbVivify: %d\n",nbVivify);
@@ -2104,7 +2104,7 @@ lbool Solver::solve_()
 #endif
         return l_False;
     }
-    double p;
+    double p,p_branch;
     double fix_industry = 0.5;
     double fix_crafted = 1.0 - fix_industry;
     VSIDS = true;
@@ -2124,8 +2124,10 @@ lbool Solver::solve_()
     vsids_features[3] = avgLearntSize;
     vsids_features[4] = avgBacktrackLength;
     vsids_features[5] = conflictIndex;
-    p = vsids_logistic_regression_classify(vsids_features,vsids_n);
-    if(p >= fix_crafted){
+    p_branch = vsids_logistic_regression_classify(vsids_features,vsids_n);
+    p = drand(random_seed);
+    printf("%.2lf <= %.2lf %d\n",p,p_branch,p<=p_branch);
+    if(p <= p_branch){
         changeBranch();
     }           
     // int phase_allotment = 10000;
@@ -2181,7 +2183,8 @@ lbool Solver::solve_()
         if(ratioUpdate && nbVivify >= branchLimit){
             ratioUpdate = false;
             calculateAvg();
-            nbVivify = 0;           
+            nbVivify = 0;
+            p = drand(random_seed);  
             if(VSIDS){
                 vsids_features[0] = reduce_var_ratio;
                 vsids_features[1] = learnt_ratio;
@@ -2189,8 +2192,10 @@ lbool Solver::solve_()
                 vsids_features[3] = avgLearntSize;
                 vsids_features[4] = avgBacktrackLength;
                 vsids_features[5] = conflictIndex;
-                p = vsids_logistic_regression_classify(vsids_features,vsids_n);
-                if(p >= fix_crafted){                    
+                p_branch = vsids_logistic_regression_classify(vsids_features,vsids_n);
+                //printf("drand()->: %.2lf\n",p);
+                printf("%.2lf <= %.2lf %d\n",p,p_branch,p<=p_branch);
+                if(p <= p_branch){                    
                     changeBranch();
                     branchLimit = branchLimit << 1;
                     printf("branchLimit: %d\n",branchLimit);
@@ -2204,8 +2209,10 @@ lbool Solver::solve_()
                 lrb_features[5] = avgVivifiedLBD;
                 lrb_features[6] = avgBacktrackLength;
                 lrb_features[7] = conflictIndex;
-                p = lrb_logistic_regression_classify(lrb_features,lrb_n);
-                if((1.0 - p) >= fix_industry){                    
+                p_branch = lrb_logistic_regression_classify(lrb_features,lrb_n);
+                //printf("drand()->: %.2lf\n",p);
+                printf("%.2lf <= %.2lf %d\n",p,1.0 - p_branch,p<=(1.0 - p_branch));
+                if(p <= (1.0 - p_branch)){                    
                     changeBranch();
                     branchLimit = branchLimit << 1;
                     printf("branchLimit: %d\n",branchLimit);
