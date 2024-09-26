@@ -2126,7 +2126,8 @@ lbool Solver::solve_()
     vsids_features[4] = avgBacktrackLength;
     vsids_features[5] = conflictIndex;
     p_branch = vsids_logistic_regression_classify(vsids_features,vsids_n);
-    if(p_branch >= 0.5){
+    p = drand(random_seed);
+    if(p <= p_branch){
         changeBranch();
     }           
     // int phase_allotment = 10000;
@@ -2167,11 +2168,11 @@ lbool Solver::solve_()
     // }    
     nbVivify = 0;
     ratioUpdate = false;
-    double luby_y = 2.0;
-    int luby_x = 0;
+    // double luby_y = 2.0;
+    // int luby_x = 0;
     // bool isBranchChange = false;
-    // uint64_t branchLimit = 1;
-    uint64_t branchLimit = luby(luby_y,luby_x++);
+    uint64_t branchLimit = 1;
+    // uint64_t branchLimit = luby(luby_y,luby_x++);
     // Search:
     int curr_restarts = 0;
     while (status == l_Undef /*&& withinBudget()*/&& !isTimeOut()){
@@ -2201,8 +2202,8 @@ lbool Solver::solve_()
                 //printf("%.2lf <= %.2lf %d\n",p,p_branch,p<=p_branch);
                 if(p <= p_branch){                    
                     changeBranch();
-                    branchLimit = luby(luby_y,luby_x++);
-                    // branchLimit = branchLimit << 1;
+                    // branchLimit = luby(luby_y,luby_x++);
+                    branchLimit = branchLimit << 1;
                     printf("branchLimit: %d\n",branchLimit);
                     // isBranchChange = true;
                 }
@@ -2220,8 +2221,8 @@ lbool Solver::solve_()
                 //printf("%.2lf <= %.2lf %d\n",p,1.0 - p_branch,p<=(1.0 - p_branch));
                 if(p <= (1.0 - p_branch)){                    
                     changeBranch();
-                    branchLimit = luby(luby_y,luby_x++);
-                    // branchLimit = branchLimit << 1;
+                    // branchLimit = luby(luby_y,luby_x++);
+                    branchLimit = branchLimit << 1;
                     printf("branchLimit: %d\n",branchLimit);
                     // isBranchChange = true;
                 }
