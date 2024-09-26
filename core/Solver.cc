@@ -2126,8 +2126,8 @@ lbool Solver::solve_()
     vsids_features[4] = avgBacktrackLength;
     vsids_features[5] = conflictIndex;
     p_branch = vsids_logistic_regression_classify(vsids_features,vsids_n);
-    p = drand(random_seed);
-    if(p <= p_branch){
+    // p = drand(random_seed);
+    if(p_branch >= fix_crafted){
         changeBranch();
     }           
     // int phase_allotment = 10000;
@@ -2189,7 +2189,7 @@ lbool Solver::solve_()
             // isBranchChange = false;
             calculateAvg();
             nbVivify = 0;
-            p = drand(random_seed);              
+            // p = drand(random_seed);              
             if(VSIDS){
                 vsids_features[0] = reduce_var_ratio;
                 vsids_features[1] = learnt_ratio;
@@ -2198,9 +2198,9 @@ lbool Solver::solve_()
                 vsids_features[4] = avgBacktrackLength;
                 vsids_features[5] = conflictIndex;
                 p_branch = vsids_logistic_regression_classify(vsids_features,vsids_n);
-                printf("drand(): %.2lf\n",p);
+                // printf("drand(): %.2lf\n",p);
                 //printf("%.2lf <= %.2lf %d\n",p,p_branch,p<=p_branch);
-                if(p <= p_branch){                    
+                if(p_branch >= fix_crafted){                    
                     changeBranch();
                     // branchLimit = luby(luby_y,luby_x++);
                     branchLimit = branchLimit << 1;
@@ -2217,9 +2217,9 @@ lbool Solver::solve_()
                 lrb_features[6] = avgBacktrackLength;
                 lrb_features[7] = conflictIndex;
                 p_branch = lrb_logistic_regression_classify(lrb_features,lrb_n);
-                printf("drand(): %.2lf\n",p);
+                // printf("drand(): %.2lf\n",p);
                 //printf("%.2lf <= %.2lf %d\n",p,1.0 - p_branch,p<=(1.0 - p_branch));
-                if(p <= (1.0 - p_branch)){                    
+                if((1-p_branch) >= fix_industry){                    
                     changeBranch();
                     // branchLimit = luby(luby_y,luby_x++);
                     branchLimit = branchLimit << 1;
