@@ -2170,7 +2170,7 @@ lbool Solver::solve_()
     ratioUpdate = false;
     // double luby_y = 2.0;
     // int luby_x = 0;
-    // bool isBranchChange = false;
+    bool isBranchChange = false;
     uint64_t branchLimit = 1;
     // uint64_t branchLimit = luby(luby_y,luby_x++);
     // Search:
@@ -2186,7 +2186,7 @@ lbool Solver::solve_()
         }
         if(ratioUpdate && nbVivify >= branchLimit){
             ratioUpdate = false;
-            // isBranchChange = false;
+            isBranchChange = false;
             calculateAvg();
             nbVivify = 0;
             // p = drand(random_seed);              
@@ -2205,7 +2205,7 @@ lbool Solver::solve_()
                     // branchLimit = luby(luby_y,luby_x++);
                     branchLimit = branchLimit << 1;
                     printf("branchLimit: %d\n",branchLimit);
-                    // isBranchChange = true;
+                    isBranchChange = true;
                 }
             }else{
                 lrb_features[0] = learnt_ratio;
@@ -2224,16 +2224,16 @@ lbool Solver::solve_()
                     // branchLimit = luby(luby_y,luby_x++);
                     branchLimit = branchLimit << 1;
                     printf("branchLimit: %d\n",branchLimit);
-                    // isBranchChange = true;
+                    isBranchChange = true;
                 }
             }
-            // if(!isBranchChange){
-            //     p = drand(random_seed);
-            //     if(p < randomBranchChangeProb){
-            //         printf("random change branch with probability: %.2lf\n",p);
-            //         changeBranch();
-            //     }                              
-            // }
+            if(!isBranchChange){
+                p = drand(random_seed);
+                if(p < randomBranchChangeProb){
+                    printf("random change branch with probability: %.2lf\n",p);
+                    changeBranch();
+                }                              
+            }
         }  
     }
     if (verbosity >= 1)
