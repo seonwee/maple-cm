@@ -2107,7 +2107,7 @@ lbool Solver::solve_()
     double p,p_branch;
     double fix_industry = 0.5;
     double fix_crafted = 1.0 - fix_industry;
-    double randomBranchChangeProb = 0.2;
+    double randomBranchChangeProb = 0.1;
     VSIDS = true;
     int init = 10000;
     while (status == l_Undef && init > 0 /*&& withinBudget()*/&& !isTimeOut())
@@ -2228,14 +2228,14 @@ lbool Solver::solve_()
                     isBranchChange = true;
                 }
             }
-            if(!isBranchChange && switch_mode && after2500sChange){
-                // p = drand(random_seed);
-                // if(p < randomBranchChangeProb){
-                //     printf("random change branch with probability: %.2lf\n",p);
-                //     changeBranch();
-                // }   
-                after2500sChange = false;
-                printf("after 2500s branch change\n");
+            if(!isBranchChange && !switch_mode ){
+                p = drand(random_seed);
+                if(p < randomBranchChangeProb){
+                    printf("random change branch with probability: %.2lf\n",p);
+                    changeBranch();
+                }   
+                // after2500sChange = false;
+                // printf("after 2500s branch change\n");
                 changeBranch();                           
             }
         }  
