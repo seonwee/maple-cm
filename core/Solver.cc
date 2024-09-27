@@ -2171,6 +2171,7 @@ lbool Solver::solve_()
     // double luby_y = 2.0;
     // int luby_x = 0;
     bool isBranchChange = false;
+    bool after2500sChange = true;
     uint64_t branchLimit = 1;
     // uint64_t branchLimit = luby(luby_y,luby_x++);
     // Search:
@@ -2227,12 +2228,13 @@ lbool Solver::solve_()
                     isBranchChange = true;
                 }
             }
-            if(!isBranchChange && switch_mode){
+            if(!isBranchChange && switch_mode && after2500sChange){
                 // p = drand(random_seed);
                 // if(p < randomBranchChangeProb){
                 //     printf("random change branch with probability: %.2lf\n",p);
                 //     changeBranch();
                 // }   
+                after2500sChange = false;
                 printf("after 2500s branch change\n");
                 changeBranch();                           
             }
