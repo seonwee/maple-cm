@@ -2074,8 +2074,8 @@ lbool Solver::solve_()
         std::thread t(sleep, 2500);
         t.detach();
     #else
-        // signal(SIGALRM, SIGALRM_switch);
-        // alarm(2500);//2500
+        signal(SIGALRM, SIGALRM_switch);
+        alarm(2500);//2500
     #endif
     
     model.clear(); usedClauses.clear();
@@ -2186,7 +2186,7 @@ lbool Solver::solve_()
         }
         if(ratioUpdate && nbVivify >= branchLimit){
             ratioUpdate = false;
-            isBranchChange = false;
+            // isBranchChange = false;
             calculateAvg();
             nbVivify = 0;
             // p = drand(random_seed);              
@@ -2227,12 +2227,14 @@ lbool Solver::solve_()
                     isBranchChange = true;
                 }
             }
-            if(!isBranchChange){
-                p = drand(random_seed);
-                if(p < randomBranchChangeProb){
-                    printf("random change branch with probability: %.2lf\n",p);
-                    changeBranch();
-                }                              
+            if(!isBranchChange && switch_mode){
+                // p = drand(random_seed);
+                // if(p < randomBranchChangeProb){
+                //     printf("random change branch with probability: %.2lf\n",p);
+                //     changeBranch();
+                // }   
+                printf("after 2500s branch change\n");
+                changeBranch();                           
             }
         }  
     }
