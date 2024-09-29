@@ -1996,43 +1996,15 @@ static double sigmoid(double x) {
 }
 
 // 逻辑回归分类函数
-//'reduceVarRatio', 'learnt.1', 'avgLearntLBD.1', 'avgLearntSize.1', 'avgBacktrackLength.1', 'conflictIndex.1'
-static double vsids_logistic_regression_classify(double* features,int n) {
+//'reduceVarRatio', 'learnt', 'origin', 'avgLearntLBD', 'avgBacktrackLength', 'conflictIndex'
+static double logistic_regression_classify(double* features, int n) {
     // 定义权重和截距
-    const static double weights[] = { -0.78309154, -1.29688358 ,-0.32691313 ,-0.19436462  ,0.25121072 ,-0.46002441 };
-    const static double intercept = -0.47552071;
+    const static double weights[] = { -0.79765408 ,-0.39810179 ,-0.53931449,0.11315222, 0.28594712, -1.1434893 };
+    const static double intercept = -0.47942833;
 
     // 定义标准化参数
-    const static double means[] = { 34.16310665 ,18.34133333,18.12860424,119.14195146 ,15.16871875,  81.48853058 };
-    const static double scales[] = { 20.04075778 ,12.8341145 ,15.32533665,536.99809867 ,30.48139, 289.806939 };
-
-    // 标准化输入特征
-    for (int i = 0; i < n; i++) {
-        features[i] = (features[i] - means[i]) / scales[i];
-    }
-    // 计算线性组合
-    double linear_combination = intercept;
-    for (int i = 0; i < n; i++) {
-        linear_combination += weights[i] * features[i];
-    }
-
-    // 应用sigmoid函数并分类
-    double probability = sigmoid(linear_combination);
-    printf("vsids logic predict probability:%.2lf\n",probability);
-    // 如果概率大于0.5，分类为1，否则为0
-    return probability;
-}
-// 逻辑回归分类函数
-//'learnt', 'origin', 'avgLearntLBD', 'avgVivifiedSize', 'avgUpAfterDecide', 'avgVivifiedLBD', 'avgBacktrackLength', 'conflictIndex'
-static double lrb_logistic_regression_classify(double* features,int n) {
-    // 定义权重和截距
-    const static double weights[] = { 0.01942556,-0.99984964,-0.09963827,-0.85580324,-0.74517383,-0.63967973,0.18918792 ,-1.40260156 };
-    const static double intercept = -0.58839864;
-
-    // 定义标准化参数
-    const static double means[] = { 15.856, 1.201, 28.93759529, 14.01728288, 801.67627138,5.15650602,10.20667925,138.30852731 };
-    const static double scales[] = { 1.10445746e+01,1.54715621e+00,3.27259055e+01,1.63868279e+01,
-    1.62028052e+03,1.91204576e+00,2.31310462e+01,3.90339255e+02 };
+    const static double means[] = { 34.16310665,17.09866667,1.2475 , 23.53309976 ,12.687699,109.89852895 };
+    const static double scales[] = { 20.04075778 ,12.03714175 , 1.59338071,26.11769494,27.17049277, 344.93988761 };
 
     // 标准化输入特征
     /*double features[] = {
@@ -2053,7 +2025,7 @@ static double lrb_logistic_regression_classify(double* features,int n) {
 
     // 应用sigmoid函数并分类
     double probability = sigmoid(linear_combination);
-    printf("lrb logic predict probability:%.2lf\n",1.0 - probability);
+    printf("vsids probability: %.2lf  lrb probability: %.2lf\n",1.0 - probability,probability);
     // 如果概率大于0.5，分类为1，否则为0
     return probability;
 }
@@ -2066,7 +2038,6 @@ void Solver::calculateAvg(){
     avgAvgLearntLBD = sumAvgLearntLBD / (double)nbVivify;
     sumAvgLearntLBD = 0;
 }
-
 // NOTE: assumptions passed in member-variable 'assumptions'.
 lbool Solver::solve_()
 {
@@ -2115,17 +2086,15 @@ lbool Solver::solve_()
     printf("c It will be possible to change the branching strategy.\n");
     calculateAvg();
     //p = vsids_logistic_regression_classify(avgLearntRatio,avgOriginRatio,avgAvgLearntLBD,reduce_var_ratio,reduce_cls_raito);
-    const int vsids_n = 6;
-    const int lrb_n = 8;
-    double vsids_features[vsids_n];
-    double lrb_features[lrb_n];
-    vsids_features[0] = reduce_var_ratio;
-    vsids_features[1] = learnt_ratio;
-    vsids_features[2] = avgLearntLBD;
-    vsids_features[3] = avgLearntSize;
-    vsids_features[4] = avgBacktrackLength;
-    vsids_features[5] = conflictIndex;
-    p_branch = vsids_logistic_regression_classify(vsids_features,vsids_n);
+    const int nbFeatures = 6;
+    double features[nbFeatures];
+    features[0] = reduce_var_ratio;
+    features[1] = learnt_ratio;
+    features[2] = origin_ratio;
+    features[3] = avgLearntLBD;
+    features[4] = avgBacktrackLength;
+    features[5] = conflictIndex;
+    p_branch = logistic_regression_classify(features,nbFeatures);
     // p = drand(random_seed);
     if(p_branch >= fix_crafted){
         changeBranch();
@@ -2171,8 +2140,8 @@ lbool Solver::solve_()
     // double luby_y = 2.0;
     // int luby_x = 0;
     bool isBranchChange = false;
-    bool after2500sChange = true;
     uint64_t branchLimit = 1;
+    bool forceChange = false;
     // uint64_t branchLimit = luby(luby_y,luby_x++);
     // Search:
     int curr_restarts = 0;
@@ -2185,60 +2154,56 @@ lbool Solver::solve_()
             curr_restarts++;
             status = search(nof_conflicts);
         }
-        if(ratioUpdate && nbVivify >= branchLimit){
+        if(ratioUpdate && nbVivify >= branchLimit && !forceChange){
             ratioUpdate = false;
             // isBranchChange = false;
             calculateAvg();
-            nbVivify = 0;
-            // p = drand(random_seed);              
+            nbVivify = 0;         
             if(VSIDS){
-                vsids_features[0] = reduce_var_ratio;
-                vsids_features[1] = learnt_ratio;
-                vsids_features[2] = avgLearntLBD;
-                vsids_features[3] = avgLearntSize;
-                vsids_features[4] = avgBacktrackLength;
-                vsids_features[5] = conflictIndex;
-                p_branch = vsids_logistic_regression_classify(vsids_features,vsids_n);
-                // printf("drand(): %.2lf\n",p);
-                //printf("%.2lf <= %.2lf %d\n",p,p_branch,p<=p_branch);
+                features[0] = reduce_var_ratio;
+                features[1] = learnt_ratio;
+                features[2] = origin_ratio;
+                features[3] = avgLearntLBD;
+                features[4] = avgBacktrackLength;
+                features[5] = conflictIndex;
+                p_branch = logistic_regression_classify(features,nbFeatures);
                 if(p_branch >= fix_crafted){                    
                     changeBranch();
-                    // branchLimit = luby(luby_y,luby_x++);
                     branchLimit = branchLimit << 1;
                     printf("branchLimit: %d\n",branchLimit);
                     isBranchChange = true;
                 }
             }else{
-                lrb_features[0] = learnt_ratio;
-                lrb_features[1] = origin_ratio;
-                lrb_features[2] = avgLearntLBD;
-                lrb_features[3] = avgVivifiedSize;
-                lrb_features[4] = avgUpAfterDecide;
-                lrb_features[5] = avgVivifiedLBD;
-                lrb_features[6] = avgBacktrackLength;
-                lrb_features[7] = conflictIndex;
-                p_branch = lrb_logistic_regression_classify(lrb_features,lrb_n);
-                // printf("drand(): %.2lf\n",p);
-                //printf("%.2lf <= %.2lf %d\n",p,1.0 - p_branch,p<=(1.0 - p_branch));
+                features[0] = reduce_var_ratio;
+                features[1] = learnt_ratio;
+                features[2] = origin_ratio;
+                features[3] = avgLearntLBD;
+                features[4] = avgBacktrackLength;
+                features[5] = conflictIndex;
+                p_branch = logistic_regression_classify(features,nbFeatures);
                 if((1-p_branch) >= fix_industry){                    
                     changeBranch();
-                    // branchLimit = luby(luby_y,luby_x++);
                     branchLimit = branchLimit << 1;
                     printf("branchLimit: %d\n",branchLimit);
                     isBranchChange = true;
                 }
             }
-            if(!isBranchChange && !switch_mode ){
-                p = drand(random_seed);
-                if(p < randomBranchChangeProb){
-                    printf("random change branch with probability: %.2lf\n",p);
-                    changeBranch();
-                }   
-                // after2500sChange = false;
-                // printf("after 2500s branch change\n");
-                changeBranch();                           
-            }
+            // if(!isBranchChange && !switch_mode ){
+            //     p = drand(random_seed);
+            //     if(p < randomBranchChangeProb){
+            //         printf("random change branch with probability: %.2lf\n",p);
+            //         changeBranch();
+            //     }   
+            //     // after2500sChange = false;
+            //     // printf("after 2500s branch change\n");
+            //     changeBranch();                           
+            // }
         }  
+        if(!isBranchChange && switch_mode){
+            printf("after 2500s branch change\n");
+            forceChange = true;
+            changeBranch();
+        }
     }
     if (verbosity >= 1)
         printf("c ===============================================================================\n");
