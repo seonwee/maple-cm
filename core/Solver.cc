@@ -2195,6 +2195,7 @@ lbool Solver::solve_()
                 if(p < randomBranchChangeProb){
                     printf("random change branch with probability: %.2lf\n",p);
                     changeBranch();
+                    happendBranchChange = true;
                 }                       
             }
         }  
