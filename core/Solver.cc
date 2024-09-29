@@ -1978,11 +1978,11 @@ void Solver::changeBranch(){
     if(VSIDS==false){
         printf("c Switched to VSIDS.\n");
         //fflush(stdout);
-        picked.clear();
-        conflicted.clear();
-        almost_conflicted.clear();
+        // picked.clear();
+        // conflicted.clear();
+        // almost_conflicted.clear();
 #ifdef ANTI_EXPLORATION
-        canceled.clear();
+        // canceled.clear();
 #endif
     }else{
         printf("c Switched to LRB.\n");
@@ -2078,7 +2078,7 @@ lbool Solver::solve_()
     double p,p_branch;
     double fix_industry = 0.5;
     double fix_crafted = 1.0 - fix_industry;
-    double randomBranchChangeProb = 0.1;
+    double randomBranchChangeProb = 0.2;
     VSIDS = true;
     int init = 10000;
     while (status == l_Undef && init > 0 /*&& withinBudget()*/&& !isTimeOut())
@@ -2141,7 +2141,7 @@ lbool Solver::solve_()
     // int luby_x = 0;
     bool isBranchChange = false;
     uint64_t branchLimit = 1;
-    bool forceChange = false;
+    bool happendBranchChange = false;
     // uint64_t branchLimit = luby(luby_y,luby_x++);
     // Search:
     int curr_restarts = 0;
@@ -2154,9 +2154,9 @@ lbool Solver::solve_()
             curr_restarts++;
             status = search(nof_conflicts);
         }
-        if(ratioUpdate && nbVivify >= branchLimit && !forceChange){
+        if(ratioUpdate && nbVivify >= branchLimit){
             ratioUpdate = false;
-            // isBranchChange = false;
+            isBranchChange = false;
             calculateAvg();
             nbVivify = 0;         
             if(VSIDS){
@@ -2172,6 +2172,7 @@ lbool Solver::solve_()
                     branchLimit = branchLimit << 1;
                     printf("branchLimit: %d\n",branchLimit);
                     isBranchChange = true;
+                    happendBranchChange = true;
                 }
             }else{
                 features[0] = reduce_var_ratio;
@@ -2186,22 +2187,20 @@ lbool Solver::solve_()
                     branchLimit = branchLimit << 1;
                     printf("branchLimit: %d\n",branchLimit);
                     isBranchChange = true;
+                    happendBranchChange = true;
                 }
             }
-            // if(!isBranchChange && !switch_mode ){
-            //     p = drand(random_seed);
-            //     if(p < randomBranchChangeProb){
-            //         printf("random change branch with probability: %.2lf\n",p);
-            //         changeBranch();
-            //     }   
-            //     // after2500sChange = false;
-            //     // printf("after 2500s branch change\n");
-            //     changeBranch();                           
-            // }
+            if(!isBranchChange){
+                p = drand(random_seed);
+                if(p < randomBranchChangeProb){
+                    printf("random change branch with probability: %.2lf\n",p);
+                    changeBranch();
+                }                       
+            }
         }  
-        if(!isBranchChange && switch_mode){
-            printf("after 2500s branch change\n");
-            forceChange = true;
+        if(!happendBranchChange && switch_mode){
+            happendBranchChange = true;
+            printf("after 2500s change branch\n");
             changeBranch();
         }
     }
