@@ -718,57 +718,54 @@ bool Solver::simplifyAll()
     origin_ratio = origin_original_length_record == 0 ? 
             0 : 
             (origin_original_length_record - origin_simplified_length_record) * 100 / 
-            (double)origin_original_length_record;
-    ratioUpdate = true;
-    avgLearntSize = nbLearntClause == 0 ? 0 :(double)sumLearntSize / (double)nbLearntClause;
-    sumLearntSize = 0;
-
-    avgLearntLBD = nbLearntClause == 0 ? 0 :(double)sumLearntLBD / (double)nbLearntClause;
-    sumLearntLBD = 0;
-    nbLearntClause = 0;
-
-
+            (double)origin_original_length_record;  
     nbVivify++;
-    sumAvgLearntLBD += avgLearntLBD;
-    sumLearntRatio += learnt_ratio;
-    sumOriginRatio += origin_ratio;
+    // sumAvgLearntLBD += avgLearntLBD;
+    // sumLearntRatio += learnt_ratio;
+    // sumOriginRatio += origin_ratio;
     //printf("%u %u\n",origin_original_length_record,origin_simplified_length_record);
 
+    ratioUpdate = true;
+    // avgLearntSize = nbLearntClause == 0 ? 0 :(double)sumLearntSize / (double)nbLearntClause;
+    // sumLearntSize = 0;
+
+    // avgLearntLBD = nbLearntClause == 0 ? 0 :(double)sumLearntLBD / (double)nbLearntClause;
+    // sumLearntLBD = 0;
+    // nbLearntClause = 0;
+
+    // avgVivifiedSize = (nbVivifiedLearnts+nbVivifiedOrigins) == 0 ? 0 :
+    //                 (double)(sumVivifiedLearntSize + sumVivifiedOriginSize) /
+    //                 (double)(nbVivifiedLearnts + nbVivifiedOrigins);
+
+    // avgVivifiedLBD = (nbVivifiedLearnts+nbVivifiedOrigins) == 0 ? 0 :
+    //                 (double)(sumVivifiedLearntLBD + sumVivifiedOriginLBD) /
+    //                 (double)(nbVivifiedLearnts + nbVivifiedOrigins);
     
+    // avgVivifiedLearntLBD = nbVivifiedLearnts == 0 ? 0 : (double)sumVivifiedLearntLBD / (double)nbVivifiedLearnts;
+    // sumVivifiedLearntLBD = 0;
 
-    avgVivifiedSize = (nbVivifiedLearnts+nbVivifiedOrigins) == 0 ? 0 :
-                    (double)(sumVivifiedLearntSize + sumVivifiedOriginSize) /
-                    (double)(nbVivifiedLearnts + nbVivifiedOrigins);
+    // avgVivifiedOriginLBD = nbVivifiedOrigins == 0 ? 0 : (double)sumVivifiedOriginLBD / (double)nbVivifiedOrigins;
+    // sumVivifiedOriginLBD = 0;
 
-    avgVivifiedLBD = (nbVivifiedLearnts+nbVivifiedOrigins) == 0 ? 0 :
-                    (double)(sumVivifiedLearntLBD + sumVivifiedOriginLBD) /
-                    (double)(nbVivifiedLearnts + nbVivifiedOrigins);
-    
-    avgVivifiedLearntLBD = nbVivifiedLearnts == 0 ? 0 : (double)sumVivifiedLearntLBD / (double)nbVivifiedLearnts;
-    sumVivifiedLearntLBD = 0;
+    // avgVivifiedLearntSize = nbVivifiedLearnts == 0 ? 0 : (double)sumVivifiedLearntSize / (double)nbVivifiedLearnts;
+    // sumVivifiedLearntSize = 0;
+    // nbVivifiedLearnts = 0;
 
-    avgVivifiedOriginLBD = nbVivifiedOrigins == 0 ? 0 : (double)sumVivifiedOriginLBD / (double)nbVivifiedOrigins;
-    sumVivifiedOriginLBD = 0;
+    // avgVivifiedOriginSize = nbVivifiedOrigins == 0 ? 0 : (double)sumVivifiedOriginSize / (double)nbVivifiedOrigins;
+    // sumVivifiedOriginSize = 0;
+    // nbVivifiedOrigins = 0;
 
-    avgVivifiedLearntSize = nbVivifiedLearnts == 0 ? 0 : (double)sumVivifiedLearntSize / (double)nbVivifiedLearnts;
-    sumVivifiedLearntSize = 0;
-    nbVivifiedLearnts = 0;
+    // avgUpAfterDecide = nbDecide == 0 ? 0 : (double)sumUpAfterDecide / (double)nbDecide;
+    // sumUpAfterDecide = 0;
+    // nbDecide = 0;
 
-    avgVivifiedOriginSize = nbVivifiedOrigins == 0 ? 0 : (double)sumVivifiedOriginSize / (double)nbVivifiedOrigins;
-    sumVivifiedOriginSize = 0;
-    nbVivifiedOrigins = 0;
+    // avgBacktrackLength = nbBacktracks == 0 ? 0 : (double)sumBacktrackLength / (double)nbBacktracks;
+    // nbBacktracks = 0;
+    // sumBacktrackLength = 0;
 
-    avgUpAfterDecide = nbDecide == 0 ? 0 : (double)sumUpAfterDecide / (double)nbDecide;
-    sumUpAfterDecide = 0;
-    nbDecide = 0;
-
-    avgBacktrackLength = nbBacktracks == 0 ? 0 : (double)sumBacktrackLength / (double)nbBacktracks;
-    nbBacktracks = 0;
-    sumBacktrackLength = 0;
-
-    conflictIndex = nbConflict == 0 ? 0 : (double)sumConflictLevelLiterals / (double)nbConflict;
-    sumConflictLevelLiterals = 0;
-    nbConflict = 0;
+    // conflictIndex = nbConflict == 0 ? 0 : (double)sumConflictLevelLiterals / (double)nbConflict;
+    // sumConflictLevelLiterals = 0;
+    // nbConflict = 0;
     // printf("avgLearntLBD:%.2lf avgVivifiedSize:%.2lf avgVivifiedLearntSize:%.2lf avgVivifiedOriginSize:%.2lf\navgUpAfterDecide:%.2lf avgVivifiedLBD:%.2lf avgVivifiedLearntLBD:%.2lf avgVivifiedOriginLBD:%.2lf\n",
     // avgLearntLBD,avgVivifiedSize,
     // avgVivifiedLearntSize,avgVivifiedOriginSize,
@@ -2033,14 +2030,54 @@ double logistic_regression_classify(double* features, int n) {
     // 如果概率大于0.5，分类为1，否则为0
     return probability;
 }
-void Solver::calculateAvg(){
+void Solver::calculate(){
     //printf("nbVivify: %d\n",nbVivify);
-    avgLearntRatio = sumLearntRatio / (double)nbVivify;
-    sumLearntRatio = 0;
-    avgOriginRatio = sumOriginRatio / (double)nbVivify;
-    sumOriginRatio = 0;
-    avgAvgLearntLBD = sumAvgLearntLBD / (double)nbVivify;
-    sumAvgLearntLBD = 0;
+    // avgLearntRatio = sumLearntRatio / (double)nbVivify;
+    // sumLearntRatio = 0;
+    // avgOriginRatio = sumOriginRatio / (double)nbVivify;
+    // sumOriginRatio = 0;
+    // avgAvgLearntLBD = sumAvgLearntLBD / (double)nbVivify;
+    // sumAvgLearntLBD = 0;
+    avgLearntSize = nbLearntClause == 0 ? 0 :(double)sumLearntSize / (double)nbLearntClause;
+    sumLearntSize = 0;
+
+    avgLearntLBD = nbLearntClause == 0 ? 0 :(double)sumLearntLBD / (double)nbLearntClause;
+    sumLearntLBD = 0;
+    nbLearntClause = 0;
+
+    avgVivifiedSize = (nbVivifiedLearnts+nbVivifiedOrigins) == 0 ? 0 :
+                    (double)(sumVivifiedLearntSize + sumVivifiedOriginSize) /
+                    (double)(nbVivifiedLearnts + nbVivifiedOrigins);
+
+    avgVivifiedLBD = (nbVivifiedLearnts+nbVivifiedOrigins) == 0 ? 0 :
+                    (double)(sumVivifiedLearntLBD + sumVivifiedOriginLBD) /
+                    (double)(nbVivifiedLearnts + nbVivifiedOrigins);
+    
+    avgVivifiedLearntLBD = nbVivifiedLearnts == 0 ? 0 : (double)sumVivifiedLearntLBD / (double)nbVivifiedLearnts;
+    sumVivifiedLearntLBD = 0;
+
+    avgVivifiedOriginLBD = nbVivifiedOrigins == 0 ? 0 : (double)sumVivifiedOriginLBD / (double)nbVivifiedOrigins;
+    sumVivifiedOriginLBD = 0;
+
+    avgVivifiedLearntSize = nbVivifiedLearnts == 0 ? 0 : (double)sumVivifiedLearntSize / (double)nbVivifiedLearnts;
+    sumVivifiedLearntSize = 0;
+    nbVivifiedLearnts = 0;
+
+    avgVivifiedOriginSize = nbVivifiedOrigins == 0 ? 0 : (double)sumVivifiedOriginSize / (double)nbVivifiedOrigins;
+    sumVivifiedOriginSize = 0;
+    nbVivifiedOrigins = 0;
+
+    avgUpAfterDecide = nbDecide == 0 ? 0 : (double)sumUpAfterDecide / (double)nbDecide;
+    sumUpAfterDecide = 0;
+    nbDecide = 0;
+
+    avgBacktrackLength = nbBacktracks == 0 ? 0 : (double)sumBacktrackLength / (double)nbBacktracks;
+    nbBacktracks = 0;
+    sumBacktrackLength = 0;
+
+    conflictIndex = nbConflict == 0 ? 0 : (double)sumConflictLevelLiterals / (double)nbConflict;
+    sumConflictLevelLiterals = 0;
+    nbConflict = 0;
 }
 // NOTE: assumptions passed in member-variable 'assumptions'.
 lbool Solver::solve_()
@@ -2088,8 +2125,7 @@ lbool Solver::solve_()
     while (status == l_Undef && init > 0 /*&& withinBudget()*/&& !isTimeOut())
         status = search(init);
     printf("c It will be possible to change the branching strategy.\n");
-    calculateAvg();
-    //p = vsids_logistic_regression_classify(avgLearntRatio,avgOriginRatio,avgAvgLearntLBD,reduce_var_ratio,reduce_cls_raito);
+    calculate();
     const int nbFeatures = 9;
     double features[nbFeatures];
     features[0] = reduce_var_ratio;
@@ -2106,98 +2142,114 @@ lbool Solver::solve_()
     if(p_branch >= fix_crafted){
         changeBranch();
     }           
-    // int phase_allotment = 10000;
-    // // Search:
-    // int curr_restarts = 0;
-    // while(status == l_Undef && !isTimeOut()){
-    //     int weighted = phase_allotment;
-    //     while (status == l_Undef && weighted > 0 /*&& withinBudget()*/&& !isTimeOut()){
-    //         if (VSIDS){
-    //             status = search(weighted);
-    //         }else{
-    //             int nof_conflicts = luby(restart_inc, curr_restarts) * restart_first;
-    //             curr_restarts++;
-    //             weighted -= nof_conflicts;
-    //             status = search(nof_conflicts);
-    //         }                        
-    //     }
-    //     if(ratioUpdate){
-    //         ratioUpdate = false;
-    //         if(VSIDS){
-    //             p_branch = vsids_predict_logistic_regression(learnt_ratio,origin_ratio,avgLearntLBD);
-    //             //p = drand(random_seed);
-    //             //printf("p_branch:%.2f\n",p_branch);
-    //             if(p_branch >= fix_p){                    
-    //                 changeBranch();
-    //                 phase_allotment += phase_allotment / 10;
-    //             }   
-    //         }else{
-    //             p_branch = lrb_predict_logistic_regression(learnt_ratio,origin_ratio,avgLearntLBD);
-    //             //p = drand(random_seed);
-    //             //printf("p_branch:%.2f\n",p_branch);
-    //             if((1-p_branch) >= fix_p){                    
-    //                 changeBranch();
-    //                 phase_allotment += phase_allotment / 10;
-    //             }
-    //         }   
-    //     }        
-    // }    
-    nbVivify = 0;
-    ratioUpdate = false;
-    bool isBranchChange = false;
-    uint64_t branchLimit = 1;
+    int phase_allotment = 100000;
     // Search:
     int curr_restarts = 0;
-    while (status == l_Undef /*&& withinBudget()*/&& !isTimeOut()){
-        if (VSIDS){
-            int weighted = INT32_MAX;
-            status = search(weighted);
-        }else{
-            int nof_conflicts = luby(restart_inc, curr_restarts) * restart_first;
-            curr_restarts++;
-            status = search(nof_conflicts);
-        }
-        if(ratioUpdate && nbVivify >= branchLimit){
-            ratioUpdate = false;
-            isBranchChange = false;
-            calculateAvg();
-            nbVivify = 0;         
-            if(VSIDS){
-                features[0] = reduce_var_ratio;
-                features[1] = reduce_cls_raito;
-                features[2] = learnt_ratio;
-                features[3] = origin_ratio;
-                features[4] = avgLearntLBD;
-                features[5] = avgVivifiedLearntSize;
-                features[6] = avgUpAfterDecide;
-                features[7] = avgVivifiedLearntLBD;
-                features[8] = conflictIndex;
-                p_branch = logistic_regression_classify(features,nbFeatures);
-                if(p_branch >= fix_crafted){                    
-                    changeBranch();
-                    branchLimit <<= 1;
-                    printf("branchLimit: %d\n",branchLimit);
-                    isBranchChange = true;
-                }
+    while(status == l_Undef && !isTimeOut()){
+        int weighted = phase_allotment;
+        while (status == l_Undef && weighted > 0 /*&& withinBudget()*/&& !isTimeOut()){
+            if (VSIDS){
+                status = search(weighted);
             }else{
-                features[0] = reduce_var_ratio;
-                features[1] = reduce_cls_raito;
-                features[2] = learnt_ratio;
-                features[3] = origin_ratio;
-                features[4] = avgLearntLBD;
-                features[5] = avgVivifiedLearntSize;
-                features[6] = avgUpAfterDecide;
-                features[7] = avgVivifiedLearntLBD;
-                features[8] = conflictIndex;
-                p_branch = logistic_regression_classify(features,nbFeatures);
-                if((1-p_branch) >= fix_industry){                    
-                    changeBranch();
-                    branchLimit <<= 1;
-                    printf("branchLimit: %d\n",branchLimit);
-                    isBranchChange = true;
-                }
-            }            
-        }  
+                int nof_conflicts = luby(restart_inc, curr_restarts) * restart_first;
+                curr_restarts++;
+                weighted -= nof_conflicts;
+                status = search(nof_conflicts);
+            }                        
+        }
+        calculate();
+        if(VSIDS){
+            features[0] = reduce_var_ratio;
+            features[1] = reduce_cls_raito;
+            features[2] = learnt_ratio;
+            features[3] = origin_ratio;
+            features[4] = avgLearntLBD;
+            features[5] = avgVivifiedLearntSize;
+            features[6] = avgUpAfterDecide;
+            features[7] = avgVivifiedLearntLBD;
+            features[8] = conflictIndex;
+            p_branch = logistic_regression_classify(features,nbFeatures);
+            p = drand(random_seed);
+            if(p <= p_branch){                    
+                changeBranch();
+                phase_allotment += phase_allotment / 10;
+                printf("phase_allotment: %d\n",phase_allotment);
+            }   
+        }else{
+            features[0] = reduce_var_ratio;
+            features[1] = reduce_cls_raito;
+            features[2] = learnt_ratio;
+            features[3] = origin_ratio;
+            features[4] = avgLearntLBD;
+            features[5] = avgVivifiedLearntSize;
+            features[6] = avgUpAfterDecide;
+            features[7] = avgVivifiedLearntLBD;
+            features[8] = conflictIndex;
+            p_branch = logistic_regression_classify(features,nbFeatures);
+            p = drand(random_seed);
+            if(p <= (1 - p_branch)){                    
+                changeBranch();
+                phase_allotment += phase_allotment / 10;
+                printf("phase_allotment: %d\n",phase_allotment);
+            }
+        }           
+    }    
+    // nbVivify = 0;
+    // ratioUpdate = false;
+    // bool isBranchChange = false;
+    // uint64_t branchLimit = 1;
+    // // Search:
+    // int curr_restarts = 0;
+    // while (status == l_Undef /*&& withinBudget()*/&& !isTimeOut()){
+    //     if (VSIDS){
+    //         int weighted = INT32_MAX;
+    //         status = search(weighted);
+    //     }else{
+    //         int nof_conflicts = luby(restart_inc, curr_restarts) * restart_first;
+    //         curr_restarts++;
+    //         status = search(nof_conflicts);
+    //     }
+    //     if(ratioUpdate && nbVivify >= branchLimit){
+    //         ratioUpdate = false;
+    //         isBranchChange = false;
+    //         calculateAvg();
+    //         nbVivify = 0;         
+    //         if(VSIDS){
+    //             features[0] = reduce_var_ratio;
+    //             features[1] = reduce_cls_raito;
+    //             features[2] = learnt_ratio;
+    //             features[3] = origin_ratio;
+    //             features[4] = avgLearntLBD;
+    //             features[5] = avgVivifiedLearntSize;
+    //             features[6] = avgUpAfterDecide;
+    //             features[7] = avgVivifiedLearntLBD;
+    //             features[8] = conflictIndex;
+    //             p_branch = logistic_regression_classify(features,nbFeatures);
+    //             if(p_branch >= fix_crafted){                    
+    //                 changeBranch();
+    //                 branchLimit <<= 1;
+    //                 printf("branchLimit: %d\n",branchLimit);
+    //                 isBranchChange = true;
+    //             }
+    //         }else{
+    //             features[0] = reduce_var_ratio;
+    //             features[1] = reduce_cls_raito;
+    //             features[2] = learnt_ratio;
+    //             features[3] = origin_ratio;
+    //             features[4] = avgLearntLBD;
+    //             features[5] = avgVivifiedLearntSize;
+    //             features[6] = avgUpAfterDecide;
+    //             features[7] = avgVivifiedLearntLBD;
+    //             features[8] = conflictIndex;
+    //             p_branch = logistic_regression_classify(features,nbFeatures);
+    //             if((1-p_branch) >= fix_industry){                    
+    //                 changeBranch();
+    //                 branchLimit <<= 1;
+    //                 printf("branchLimit: %d\n",branchLimit);
+    //                 isBranchChange = true;
+    //             }
+    //         }            
+    //     }  
         // if(!isBranchChange){
         //     p = drand(random_seed);
         //     if(p < randomBranchChangeProb){
@@ -2205,7 +2257,7 @@ lbool Solver::solve_()
         //         changeBranch();
         //     }                       
         // }
-    }
+    // }
     if (verbosity >= 1)
         printf("c ===============================================================================\n");
     
