@@ -2142,6 +2142,7 @@ lbool Solver::solve_()
     if(p_branch >= fix_crafted){
         changeBranch();
     }           
+    double increment_ratio = 0.15;
     int phase_allotment = 100000;
     // Search:
     int curr_restarts = 0;
@@ -2172,7 +2173,7 @@ lbool Solver::solve_()
             p = drand(random_seed);
             if(p <= p_branch){                    
                 changeBranch();
-                phase_allotment += phase_allotment / 10;
+                phase_allotment += phase_allotment * increment_ratio;
                 printf("phase_allotment: %d\n",phase_allotment);
             }   
         }else{
@@ -2189,7 +2190,7 @@ lbool Solver::solve_()
             p = drand(random_seed);
             if(p <= (1 - p_branch)){                    
                 changeBranch();
-                phase_allotment += phase_allotment / 10;
+                phase_allotment += phase_allotment * increment_ratio;
                 printf("phase_allotment: %d\n",phase_allotment);
             }
         }           
