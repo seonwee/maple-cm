@@ -710,7 +710,8 @@ bool Solver::simplifyAll()
     double ratio1 = sumSimpLit == 0 ? nbSimpLitFromOrigin : double(nbSimpLitFromOrigin) / double(sumSimpLit);
     double ratio2 = sumSimpLit == 0 ? nbSimpLitFromLearnt : double(nbSimpLitFromLearnt) / double(sumSimpLit);
     double ratio3 = sumSimpLit == 0 ? nbSimpLitFromDecisionLit : double(nbSimpLitFromDecisionLit) / double(sumSimpLit);
-    printf("c %.2lf %.2lf %.2lf\n",ratio1,ratio2,ratio3);
+    double ratio4 = nbSimpLitFromLearnt == 0 ? nbSimpLitFromOrigin:double(nbSimpLitFromOrigin) / double(nbSimpLitFromLearnt);
+    printf("c %.2lf %.2lf %.2lf %.2lf\n",ratio1,ratio2,ratio3,ratio4);
     //if (!simplifyLearnt_x(learnts_local)) return ok = false;
     if (!simplifyUsedOriginalClauses()) return ok = false;
     
@@ -1951,13 +1952,13 @@ lbool Solver::solve_()
     
     VSIDS = true;
     int init = 10000;
-    while (status == l_Undef && init > 0 /*&& withinBudget()*/)
+    while (status == l_Undef && init > 0 /*&& withinBudget()*/ && !asynch_interrupt)
         status = search(init);
     VSIDS = false;
     
     // Search:
     int curr_restarts = 0;
-    while (status == l_Undef /*&& withinBudget()*/){
+    while (status == l_Undef /*&& withinBudget()*/ && !asynch_interrupt){
         if (VSIDS){
             int weighted = INT32_MAX;
             status = search(weighted);
