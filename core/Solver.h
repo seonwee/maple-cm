@@ -434,6 +434,15 @@ public:
 
     bool simplifyUsedOriginalClauses();
 
+    //mab
+    double mab_reward[2]; //用于记录两个臂分别的累计奖励
+    double mabc = 4;
+    unsigned int mab_select[2] = {0,0}; //用于记录两个臂分别被选用的总次数
+    double mab_decisions = 0; //论文中的奖励函数中的desicions_t
+    unsigned mab_chosen_tot = 0; //论文中的奖励函数中的decidedVars_t
+    unsigned mab_heuristics = 2; //分支启发式策略的个数
+    vec<bool> mab_chosen;
+    void restart_mab();
 };
 
 

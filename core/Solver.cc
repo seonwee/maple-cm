@@ -1778,11 +1778,16 @@ lbool Solver::search(int& nof_conflicts)
              if (next == lit_Undef)*/{
                 // New variable decision:
                 decisions++;
+                mab_decisions++;
                 next = pickBranchLit();
 
                 if (next == lit_Undef)
                     // Model found:
                     return l_True;
+                if(!mab_chosen[var(next)]){
+                    mab_chosen[var(next)] = true;
+                    mab_chosen_tot++;
+                }
             }
             
             // Increase decision level and enqueue 'next'
@@ -1851,16 +1856,46 @@ void sleep(int time)
 static void SIGALRM_switch(int signum) { switch_mode = true; }
 #endif
 
-
+void Solver::restart_mab(){
+    unsigned restarts = 0; //论文中的t
+    mab_reward[VSIDS] += !mab_chosen_tot ? 0 : log2(mab_decisions) / mab_chosen_tot;
+    for(int i = 0; i < mab_chosen.size(); i++){
+        mab_chosen[i] = false;
+    }
+	mab_chosen_tot = 0;
+	mab_decisions = 0;
+	for(unsigned i = 0; i < mab_heuristics; i++) restarts +=  mab_select[i];
+    // printf("c restarts: %ld %ld\n",restarts,starts);
+    // bool pre_heuristic = VSIDS;
+	if(restarts < mab_heuristics) {
+		VSIDS = VSIDS == false ? true : false; 
+	}else{
+		double ucb[2];
+		VSIDS = false;
+		for(unsigned i = 0; i < mab_heuristics; i++) {
+		     ucb[i] = mab_reward[i] / double(mab_select[i]) + sqrt(mabc * log(restarts+1) / double(mab_select[i]));
+		     if(i != 0 && ucb[i] > ucb[VSIDS]) VSIDS = bool(i);
+		}
+        // printf("c reward: %lf %lf\n",ucb[0],ucb[1]);
+	}
+	mab_select[VSIDS]++;
+    // if(pre_heuristic != VSIDS){
+    //     if(pre_heuristic){
+    //         printf("c VSIDS -> LRB\n");
+    //     }else{
+    //         printf("c LRB -> VSIDS\n");
+    //     }
+    // }
+}
 // NOTE: assumptions passed in member-variable 'assumptions'.
 lbool Solver::solve_()
 {
 #ifdef _MSC_VER_Sleep
-    std::thread t(sleep, 2500);
-    t.detach();
+    // std::thread t(sleep, 2500);
+    // t.detach();
 #else
-    signal(SIGALRM, SIGALRM_switch);
-    alarm(2500);
+    // signal(SIGALRM, SIGALRM_switch);
+    // alarm(2500);
 #endif
     
     model.clear(); usedClauses.clear();
@@ -1890,15 +1925,15 @@ lbool Solver::solve_()
         return l_False;
     }
     
+    // VSIDS = true;
+    // int init = 10000;
+    // while (status == l_Undef && init > 0 /*&& withinBudget()*/)
+    //     status = search(init);
     VSIDS = true;
-    int init = 10000;
-    while (status == l_Undef && init > 0 /*&& withinBudget()*/)
-        status = search(init);
-    VSIDS = false;
-    
+    mab_select[int(VSIDS)]++;
     // Search:
     int curr_restarts = 0;
-    while (status == l_Undef /*&& withinBudget()*/){
+    while (status == l_Undef /*&& withinBudget()*/&& !asynch_interrupt){
         if (VSIDS){
             int weighted = INT32_MAX;
             status = search(weighted);
@@ -1907,17 +1942,18 @@ lbool Solver::solve_()
             curr_restarts++;
             status = search(nof_conflicts);
         }
-        if (!VSIDS && switch_mode){
-            VSIDS = true;
-            printf("c Switched to VSIDS.\n");
-            fflush(stdout);
-            picked.clear();
-            conflicted.clear();
-            almost_conflicted.clear();
-#ifdef ANTI_EXPLORATION
-            canceled.clear();
-#endif
-        }
+        restart_mab();
+//         if (!VSIDS && switch_mode){
+//             VSIDS = true;
+//             printf("c Switched to VSIDS.\n");
+//             fflush(stdout);
+//             picked.clear();
+//             conflicted.clear();
+//             almost_conflicted.clear();
+// #ifdef ANTI_EXPLORATION
+//             canceled.clear();
+// #endif
+//         }
     }
     
     if (verbosity >= 1)
