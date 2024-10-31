@@ -238,13 +238,13 @@ int main(int argc, char** argv)
             printStats(S);
             printf("\n"); }
         printf(ret == l_True ? "s SATISFIABLE\n" : ret == l_False ? "s UNSATISFIABLE\n" : "s UNKNOWN\n");
-        if (ret == l_True){
-            printf("v ");
-            for (int i = 0; i < S.nVars(); i++)
-                if (S.model[i] != l_Undef)
-                    printf("%s%s%d", (i==0)?"":" ", (S.model[i]==l_True)?"":"-", i+1);
-            printf(" 0\n");
-        }
+        // if (ret == l_True){
+        //     printf("v ");
+        //     for (int i = 0; i < S.nVars(); i++)
+        //         if (S.model[i] != l_Undef)
+        //             printf("%s%s%d", (i==0)?"":" ", (S.model[i]==l_True)?"":"-", i+1);
+        //     printf(" 0\n");
+        // }
 
         if (S.drup_file && ret == l_False){
 #ifdef BIN_DRUP
