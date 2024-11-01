@@ -669,8 +669,8 @@ bool Solver::simplifyAll()
     checkGarbage();
     
     ////
-    printf("c size_reduce_ratio     : %4.2f%%\n",
-           original_length_record == 0 ? 0 : (original_length_record - simplified_length_record) * 100 / (double)original_length_record);
+    // printf("c size_reduce_ratio     : %4.2f%%\n",
+    //        original_length_record == 0 ? 0 : (original_length_record - simplified_length_record) * 100 / (double)original_length_record);
     
     return true;
 }
@@ -1655,7 +1655,7 @@ lbool Solver::search(int& nof_conflicts)
     //
     if (conflicts >= curSimplify * nbconfbeforesimplify){
         nbSimplifyAll++;
-        printf("c ### simplifyAll %llu on conflict : %lld and restart: %lld\n",  nbSimplifyAll, conflicts, starts);
+        // printf("c ### simplifyAll %llu on conflict : %lld and restart: %lld\n",  nbSimplifyAll, conflicts, starts);
         if (!simplifyAll()){
             return l_False;
         }
@@ -2109,7 +2109,7 @@ void Solver::relocAll(ClauseAllocator& to)
             usedClauses[j++] = usedClauses[i]; }
     usedClauses.shrink(i - j);
     
-    printf("c **** garbage collection done ****\n");
+    // printf("c **** garbage collection done ****\n");
 }
 
 
