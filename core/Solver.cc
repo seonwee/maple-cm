@@ -1874,7 +1874,7 @@ void Solver::restart_mab(){
 		VSIDS = false;
 		for(unsigned i = 0; i < mab_heuristics; i++) {
 		     ucb[i] = mab_reward[i] / double(mab_select[i]) + sqrt(mabc * log(restarts+1) / double(mab_select[i]));
-		     if(i != 0 && ucb[i] > ucb[VSIDS]) VSIDS = bool(i);
+		     if(i != 0 && ucb[i] > ucb[int(VSIDS)]) VSIDS = bool(i);
 		}
         // printf("c reward: %lf %lf\n",ucb[0],ucb[1]);
 	}
@@ -1930,7 +1930,7 @@ lbool Solver::solve_()
     // while (status == l_Undef && init > 0 /*&& withinBudget()*/)
     //     status = search(init);
     VSIDS = true;
-    mab_select[int(VSIDS)]++;
+    // mab_select[int(VSIDS)]++;
     // Search:
     int curr_restarts = 0;
     while (status == l_Undef /*&& withinBudget()*/&& !asynch_interrupt){
