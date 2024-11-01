@@ -70,6 +70,7 @@ static void parse_DIMACS_main(B& in, Solver& S) {
             readClause(in, S, lits);
             S.addClause_(lits); }
     }
+    S.mab_chosen.growTo(S.nVars(),false);
     if (vars != S.nVars())
         fprintf(stderr, "WARNING! DIMACS header mismatch: wrong number of variables.\n");
     if (cnt  != clauses)

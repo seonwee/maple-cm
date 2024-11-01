@@ -178,8 +178,7 @@ int main(int argc, char** argv)
             printf("c ============================[ Problem Statistics ]=============================\n");
             printf("c |                                                                             |\n"); }
         
-        parse_DIMACS(in, S);
-        S.mab_chosen.growTo(S.nVars(),false);
+        parse_DIMACS(in, S);        
         gzclose(in);
         FILE* res = (argc >= 3) ? fopen(argv[2], "wb") : NULL;
 

@@ -1930,7 +1930,7 @@ lbool Solver::solve_()
     // while (status == l_Undef && init > 0 /*&& withinBudget()*/)
     //     status = search(init);
     VSIDS = true;
-    // mab_select[int(VSIDS)]++;
+    mab_select[int(VSIDS)]++;
     // Search:
     int curr_restarts = 0;
     while (status == l_Undef /*&& withinBudget()*/&& !asynch_interrupt){
