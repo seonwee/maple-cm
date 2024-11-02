@@ -665,7 +665,8 @@ bool Solver::simplifyAll()
     if (!simplifyLearnt_tier2()) return ok = false;
     //if (!simplifyLearnt_x(learnts_local)) return ok = false;
     if (!simplifyUsedOriginalClauses()) return ok = false;
-    
+    simplified_length_record_tot += simplified_length_record;
+    original_length_record_tot += original_length_record;
     checkGarbage();
     
     ////
@@ -1874,8 +1875,25 @@ void Solver::restart_mab(){
 		VSIDS = false;
 		for(unsigned i = 0; i < mab_heuristics; i++) {
 		     ucb[i] = mab_reward[i] / double(mab_select[i]) + sqrt(mabc * log(restarts+1) / double(mab_select[i]));
-		     if(i != 0 && ucb[i] > ucb[int(VSIDS)]) VSIDS = bool(i);
+		    //  if(i != 0 && ucb[i] > ucb[int(VSIDS)]) VSIDS = bool(i);
 		}
+        if(original_length_record_tot == 0){
+            VSIDS = ucb[1] > ucb[0];            
+        }else{
+            double vivification_ratio_threshold = 0.08;
+            double vivification_ratio = (double)(original_length_record_tot - simplified_length_record_tot) / (double)original_length_record_tot;
+            simplified_length_record_tot = original_length_record_tot = 0;
+            double lrb_weight,vsids_weight;
+            if(vivification_ratio < vivification_ratio_threshold){
+                lrb_weight = 0.8;
+                vsids_weight = 0.2;
+            }else{
+                lrb_weight = 0.5;
+                vsids_weight = 0.5;
+            }
+            double vsids_prob = (ucb[1] * vsids_weight) / (ucb[0] * lrb_weight + ucb[1] * vsids_weight);
+            if(vsids_prob < drand(random_seed)) VSIDS = true;
+        }        
         // printf("c reward: %lf %lf\n",ucb[0],ucb[1]);
 	}
 	mab_select[VSIDS]++;
