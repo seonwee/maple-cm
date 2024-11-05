@@ -1933,23 +1933,16 @@ lbool Solver::solve_()
     mab_select[int(VSIDS)]++;
     // Search:
     int curr_restarts = 0;
-    int gamma = 10000;
     while (status == l_Undef /*&& withinBudget()*/&& !asynch_interrupt){
-        int weighted = gamma;
-        while(status == l_Undef && weighted > 0 && !asynch_interrupt){
-            if (VSIDS){
-                // int weighted = INT32_MAX;
-                status = search(weighted);
-            }else{
-                int nof_conflicts = luby(restart_inc, curr_restarts) * restart_first;
-                curr_restarts++;
-                weighted -= nof_conflicts;
-                status = search(nof_conflicts);
-            }
-        }        
+        if (VSIDS){
+            int weighted = INT32_MAX;
+            status = search(weighted);
+        }else{
+            int nof_conflicts = luby(restart_inc, curr_restarts) * restart_first;
+            curr_restarts++;
+            status = search(nof_conflicts);
+        }
         restart_mab();
-        gamma += gamma/10;
-        // printf("c gamma : %d\n",gamma);
 //         if (!VSIDS && switch_mode){
 //             VSIDS = true;
 //             printf("c Switched to VSIDS.\n");
