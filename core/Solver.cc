@@ -1892,13 +1892,13 @@ lbool Solver::solve_()
     
     VSIDS = true;
     int init = 10000;
-    while (status == l_Undef && init > 0 /*&& withinBudget()*/)
+    while (status == l_Undef && init > 0 /*&& withinBudget()*/&& !asynch_interrupt)
         status = search(init);
     VSIDS = false;
     
     // Search:
     int curr_restarts = 0;
-    while (status == l_Undef /*&& withinBudget()*/){
+    while (status == l_Undef /*&& withinBudget()*/&& !asynch_interrupt){
         if (VSIDS){
             int weighted = INT32_MAX;
             status = search(weighted);
