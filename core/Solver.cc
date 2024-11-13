@@ -876,14 +876,7 @@ Var Solver::newVar(bool sign, bool dvar)
     vardata  .push(mkVarData(CRef_Undef, 0));
     activity_CHB  .push(0);
     activity_VSIDS.push(rnd_init_act ? drand(random_seed) * 0.00001 : 0);
-    
-    picked.push(0);
     conflicted.push(0);
-    almost_conflicted.push(0);
-#ifdef ANTI_EXPLORATION
-    canceled.push(0);
-#endif
-    
     seen     .push(0);
     seen2    .push(0);
     polarity .push(sign);
@@ -1017,21 +1010,7 @@ void Solver::cancelUntil(int level) {
             Var      x  = var(trail[c]);
             
             if (!VSIDS){
-                uint32_t age = conflicts - picked[x];
-                if (age > 0){
-                    double adjusted_reward = ((double) (conflicted[x] + almost_conflicted[x])) / ((double) age);
-                    double old_activity = activity_CHB[x];
-                    activity_CHB[x] = step_size * adjusted_reward + ((1 - step_size) * old_activity);
-                    if (order_heap_CHB.inHeap(x)){
-                        if (activity_CHB[x] > old_activity)
-                            order_heap_CHB.decrease(x);
-                        else
-                            order_heap_CHB.increase(x);
-                    }
-                }
-#ifdef ANTI_EXPLORATION
-                canceled[x] = conflicts;
-#endif
+                
             }
             
             assigns [x] = l_Undef;
@@ -1064,24 +1043,9 @@ Lit Solver::pickBranchLit()
         if (order_heap.empty())
             return lit_Undef;
         else{
-#ifdef ANTI_EXPLORATION
-            if (!VSIDS){
-                Var v = order_heap_CHB[0];
-                uint32_t age = conflicts - canceled[v];
-                while (age > 0){
-                    double decay = pow(0.95, age);
-                    activity_CHB[v] *= decay;
-                    if (order_heap_CHB.inHeap(v))
-                        order_heap_CHB.increase(v);
-                    canceled[v] = conflicts;
-                    v = order_heap_CHB[0];
-                    age = conflicts - canceled[v];
-                }
-            }
-#endif
             next = order_heap.removeMin();
         }
-    
+
     return mkLit(next, polarity[next]);
 }
 
@@ -1170,7 +1134,7 @@ void Solver::analyze(CRef confl, vec<Lit>& out_learnt, int& out_btlevel, int& ou
                     varBumpActivity(var(q), .5);
                     add_tmp.push(q);
                 }else
-                    conflicted[var(q)]++;
+                    conflicted[var(q)] = conflicts;
                 seen[var(q)] = 1;
                 if (level(var(q)) >= decisionLevel()){
                     pathC++;
@@ -1263,7 +1227,6 @@ void Solver::analyze(CRef confl, vec<Lit>& out_learnt, int& out_btlevel, int& ou
                     Lit l = reaC[i];
                     if (!seen[var(l)]){
                         seen[var(l)] = true;
-                        almost_conflicted[var(l)]++;
                         analyze_toclear.push(l); } } } } }
     
     if (out_lbd > lbdLimitForOriCls) {
@@ -1390,18 +1353,7 @@ void Solver::uncheckedEnqueue(Lit p, CRef from)
     assert(value(p) == l_Undef);
     Var x = var(p);
     if (!VSIDS){
-        picked[x] = conflicts;
-        conflicted[x] = 0;
-        almost_conflicted[x] = 0;
-#ifdef ANTI_EXPLORATION
-        uint32_t age = conflicts - canceled[var(p)];
-        if (age > 0){
-            double decay = pow(0.95, age);
-            activity_CHB[var(p)] *= decay;
-            if (order_heap_CHB.inHeap(var(p)))
-                order_heap_CHB.increase(var(p));
-        }
-#endif
+        
     }
     
     assigns[x] = lbool(!sign(p));
@@ -1629,6 +1581,17 @@ bool Solver::simplify()
     return true;
 }
 
+void Solver::updateQ(Var v, double multi) {
+    uint32_t age = conflicts - conflicted[v] + 1;
+    double adjusted_reward = step_size * multi / age;
+    double old_activity = activity_CHB[v];
+    activity_CHB[v] = adjusted_reward + ((1 - step_size) * old_activity);
+    if (order_heap_CHB.inHeap(v))
+        if (activity_CHB[v] > old_activity)
+            order_heap_CHB.decrease(v);
+        else
+            order_heap_CHB.increase(v);
+}
 
 /*_________________________________________________________________________________________________
  |
@@ -1662,10 +1625,14 @@ lbool Solver::search(int& nof_conflicts)
         curSimplify = (conflicts / nbconfbeforesimplify) + 1;
         nbconfbeforesimplify += incSimplify;
     }
-    
+    action = trail.size();
     for (;;){
         CRef confl = propagate();
-        
+
+        for (int a = action; a < trail.size(); a++){
+            Var v = var(trail[a]);
+            updateQ(v, confl == CRef_Undef ? 0.9 : 1.0); }
+
         if (confl != CRef_Undef){
             // CONFLICT
             if (VSIDS){
@@ -1680,7 +1647,8 @@ lbool Solver::search(int& nof_conflicts)
             learnt_clause.clear();
             analyze(confl, learnt_clause, backtrack_level, lbd);
             cancelUntil(backtrack_level);
-            
+            action = trail.size();
+
             lbd--;
             if (VSIDS){
                 cached = false;
@@ -1792,6 +1760,7 @@ lbool Solver::search(int& nof_conflicts)
             
             // Increase decision level and enqueue 'next'
             newDecisionLevel();
+            action = trail.size();
             uncheckedEnqueue(next);
         }
     }
@@ -1943,17 +1912,6 @@ lbool Solver::solve_()
             status = search(nof_conflicts);
         }
         restart_mab();
-//         if (!VSIDS && switch_mode){
-//             VSIDS = true;
-//             printf("c Switched to VSIDS.\n");
-//             fflush(stdout);
-//             picked.clear();
-//             conflicted.clear();
-//             almost_conflicted.clear();
-// #ifdef ANTI_EXPLORATION
-//             canceled.clear();
-// #endif
-//         }
     }
     
     if (verbosity >= 1)

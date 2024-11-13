@@ -192,13 +192,6 @@ public:
     uint64_t solves, starts, decisions, rnd_decisions, propagations, conflicts, conflicts_VSIDS;
     uint64_t dec_vars, clauses_literals, learnts_literals, max_literals, tot_literals;
 
-    vec<uint32_t> picked;
-    vec<uint32_t> conflicted;
-    vec<uint32_t> almost_conflicted;
-#ifdef ANTI_EXPLORATION
-    vec<uint32_t> canceled;
-#endif
-
 protected:
 
     // Helper structures:
@@ -255,6 +248,10 @@ protected:
                         order_heap_VSIDS;
     double              progress_estimate;// Set by 'search()'.
     bool                remove_satisfied; // Indicates whether possibly inefficient linear scan for satisfied clauses should be performed in 'simplify'.
+
+    int action;
+    vec<uint32_t> conflicted;
+    void updateQ(Var v, double multi);
 
     int                 core_lbd_cut;
     float               global_lbd_sum;
