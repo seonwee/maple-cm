@@ -1629,9 +1629,14 @@ lbool Solver::search(int& nof_conflicts)
     for (;;){
         CRef confl = propagate();
 
-        for (int a = action; a < trail.size(); a++){
-            Var v = var(trail[a]);
-            updateQ(v, confl == CRef_Undef ? 0.9 : 1.0); }
+        if(!VSIDS)
+        {
+            for (int a = action; a < trail.size(); a++)
+            {
+                Var v = var(trail[a]);
+                updateQ(v, confl == CRef_Undef ? 0.9 : 1.0); 
+            }
+        }        
 
         if (confl != CRef_Undef){
             // CONFLICT
