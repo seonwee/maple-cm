@@ -89,6 +89,7 @@ Solver::Solver() :
     //
     drup_file        (NULL)
   , verbosity        (0)
+  , action           (0)
   , step_size        (opt_step_size)
   , step_size_dec    (opt_step_size_dec)
   , min_step_size    (opt_min_step_size)
@@ -117,7 +118,7 @@ Solver::Solver() :
 
   // Statistics: (formerly in 'SolverStats')
   //
-  , solves(0), starts(0), decisions(0), rnd_decisions(0), propagations(0), conflicts(0), conflicts_VSIDS(0)
+  , solves(0), starts(0), decisions(0), rnd_decisions(0), propagations(0), conflicts(0), conflicts_VSIDS(0), conflicts_CHB(0)
   , dec_vars(0), clauses_literals(0), learnts_literals(0), max_literals(0), tot_literals(0)
 
   , ok                 (true)
@@ -136,6 +137,8 @@ Solver::Solver() :
   , core_lbd_cut       (3)
   , global_lbd_sum     (0)
   , lbd_queue          (50)
+  , global_lbd_sum_CHB (0)
+  , lbd_queue_CHB      (50)
   , next_T2_reduce     (10000)
   , next_L_reduce      (15000)
 
@@ -883,6 +886,7 @@ Var Solver::newVar(bool sign, bool dvar)
     decision .push();
     trail    .capacity(v+1);
     setDecisionVar(v, dvar);
+    mab_chosen.push(false);
     return v;
 }
 
@@ -1655,11 +1659,16 @@ lbool Solver::search(int& nof_conflicts)
             action = trail.size();
 
             lbd--;
-            if (VSIDS){
-                cached = false;
+            cached = false;
+            if (VSIDS){                
                 conflicts_VSIDS++;
                 lbd_queue.push(lbd);
-                global_lbd_sum += (lbd > 50 ? 50 : lbd); }
+                global_lbd_sum += (lbd > 50 ? 50 : lbd); 
+            }else{
+                conflicts_CHB++;
+                lbd_queue_CHB.push(lbd);
+                global_lbd_sum_CHB += (lbd > 50 ? 50 : lbd);
+            }
             
             if (learnt_clause.size() == 1){
                 uncheckedEnqueue(learnt_clause[0]);
@@ -1707,14 +1716,20 @@ lbool Solver::search(int& nof_conflicts)
         }else{
             // NO CONFLICT
             bool restart = false;
-            if (!VSIDS)
-                restart = nof_conflicts <= 0;
-            else if (!cached){
-                restart = lbd_queue.full() && (lbd_queue.avg() * 0.8 > global_lbd_sum / conflicts_VSIDS);
+            // if (!VSIDS)
+            //     restart = nof_conflicts <= 0;
+            // else if (!cached){
+
+            if(!cached){
                 cached = true;
+                if (VSIDS)
+                    restart = lbd_queue.full() && (lbd_queue.avg() * 0.8 > global_lbd_sum / conflicts_VSIDS);
+                else
+                    restart = lbd_queue_CHB.full() && (lbd_queue_CHB.avg() * 0.8 > global_lbd_sum_CHB / conflicts_CHB);            
             }
             if (restart /*|| !withinBudget()*/){
                 lbd_queue.clear();
+                lbd_queue_CHB.clear();
                 cached = false;
                 // Reached bound on number of conflicts:
                 progress_estimate = progressEstimate();
@@ -1908,14 +1923,8 @@ lbool Solver::solve_()
     // Search:
     int curr_restarts = 0;
     while (status == l_Undef /*&& withinBudget()*/&& !asynch_interrupt){
-        if (VSIDS){
-            int weighted = INT32_MAX;
-            status = search(weighted);
-        }else{
-            int nof_conflicts = luby(restart_inc, curr_restarts) * restart_first;
-            curr_restarts++;
-            status = search(nof_conflicts);
-        }
+        int weighted = INT32_MAX;
+        status = search(weighted);
         restart_mab();
     }
     
