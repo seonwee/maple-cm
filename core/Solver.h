@@ -189,7 +189,7 @@ public:
 
     // Statistics: (read-only member variable)
     //
-    uint64_t solves, starts, decisions, rnd_decisions, propagations, conflicts, conflicts_VSIDS, conflicts_LRB;
+    uint64_t solves, starts, decisions, rnd_decisions, propagations, conflicts, conflicts_VSIDS;
     uint64_t dec_vars, clauses_literals, learnts_literals, max_literals, tot_literals;
 
     vec<uint32_t> picked;
@@ -259,8 +259,6 @@ protected:
     int                 core_lbd_cut;
     float               global_lbd_sum;
     MyQueue<int>        lbd_queue;  // For computing moving averages of recent LBD values.
-    float               global_lbd_sum_LRB;
-    MyQueue<int>        lbd_queue_LRB;
 
     uint64_t            next_T2_reduce,
                         next_L_reduce;
