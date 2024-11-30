@@ -1925,10 +1925,10 @@ lbool Solver::solve_()
         return l_False;
     }
     
-    // VSIDS = true;
-    // int init = 10000;
-    // while (status == l_Undef && init > 0 /*&& withinBudget()*/)
-    //     status = search(init);
+    VSIDS = true;
+    int init = 10000;
+    while (status == l_Undef && init > 0 /*&& withinBudget()*/)
+        status = search(init);
     VSIDS = true;
     mab_select[int(VSIDS)]++;
     // Search:
