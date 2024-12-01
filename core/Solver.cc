@@ -155,6 +155,8 @@ Solver::Solver() :
   , curSimplify(1)
   , nbconfbeforesimplify(1000)
   , incSimplify(1000)
+  , vivification_ratio(0)
+  , isVivification(false)
 {}
 
 
@@ -671,7 +673,9 @@ bool Solver::simplifyAll()
     ////
     // printf("c size_reduce_ratio     : %4.2f%%\n",
     //        original_length_record == 0 ? 0 : (original_length_record - simplified_length_record) * 100 / (double)original_length_record);
-    
+    isVivification = true;
+    vivification_ratio = 
+    original_length_record == 0 ? 0 : (double)(original_length_record - simplified_length_record) / (double)original_length_record;    
     return true;
 }
 
@@ -1654,7 +1658,7 @@ lbool Solver::search(int& nof_conflicts)
     // simplify
     //
     if (conflicts >= curSimplify * nbconfbeforesimplify){
-        nbSimplifyAll++;
+        nbSimplifyAll++;        
         // printf("c ### simplifyAll %llu on conflict : %lld and restart: %lld\n",  nbSimplifyAll, conflicts, starts);
         if (!simplifyAll()){
             return l_False;
@@ -1856,6 +1860,21 @@ void sleep(int time)
 static void SIGALRM_switch(int signum) { switch_mode = true; }
 #endif
 
+void Solver::rewardCompensation(){
+    const double vivification_ratio_threshold = 0.8;
+    const double compensation_coefficient = 1.5;
+    if(isVivification){
+        isVivification = false;
+        double lrb_reward =  mab_reward[0] / double(mab_select[0]);
+        double vsids_reward = mab_reward[1] / double(mab_select[1]);
+        if(vivification_ratio <= vivification_ratio_threshold && lrb_reward >= vsids_reward){
+            printf("rewardCompensation\n");
+            mab_reward[0] += lrb_reward * compensation_coefficient;
+            mab_select[0]++;
+        }
+    }
+}
+
 void Solver::restart_mab(){
     unsigned restarts = 0; //论文中的t
     mab_reward[VSIDS] += !mab_chosen_tot ? 0 : log2(mab_decisions) / mab_chosen_tot;
@@ -1870,6 +1889,7 @@ void Solver::restart_mab(){
 	if(restarts < mab_heuristics) {
 		VSIDS = VSIDS == false ? true : false; 
 	}else{
+        rewardCompensation();
 		double ucb[2];
 		VSIDS = false;
 		for(unsigned i = 0; i < mab_heuristics; i++) {

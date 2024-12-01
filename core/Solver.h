@@ -417,6 +417,8 @@ public:
     CRef    simplePropagate();
     uint64_t nbSimplifyAll;
     uint64_t simplified_length_record, original_length_record;
+    double vivification_ratio;
+    bool isVivification;
     uint64_t s_propagations;
 
     vec<Lit> simp_learnt_clause;
@@ -443,6 +445,7 @@ public:
     unsigned mab_heuristics = 2; //分支启发式策略的个数
     vec<bool> mab_chosen;
     void restart_mab();
+    void rewardCompensation();
 };
 
 
