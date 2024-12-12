@@ -669,8 +669,8 @@ bool Solver::simplifyAll()
     checkGarbage();
     
     ////
-    // printf("c size_reduce_ratio     : %4.2f%%\n",
-    //        original_length_record == 0 ? 0 : (original_length_record - simplified_length_record) * 100 / (double)original_length_record);
+    printf("c size_reduce_ratio     : %4.2f%%\n",
+           original_length_record == 0 ? 0 : (original_length_record - simplified_length_record) * 100 / (double)original_length_record);
     
     return true;
 }
