@@ -1899,12 +1899,7 @@ lbool Solver::solve_()
         return l_False;
     }
     
-    VSIDS = true;
-    int init = 10000;
-    while (status == l_Undef && init > 0 && !asynch_interrupt)
-        status = search(init);
-    VSIDS = true;
-    mab_select[int(VSIDS)]++;
+    VSIDS = false;
     // Search:
     int curr_restarts = 0;
     while (status == l_Undef /*&& withinBudget()*/&& !asynch_interrupt){
@@ -1916,7 +1911,6 @@ lbool Solver::solve_()
             curr_restarts++;
             status = search(nof_conflicts);
         }
-        restart_mab();
     }
     
     if (verbosity >= 1)
