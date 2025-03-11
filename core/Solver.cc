@@ -1931,6 +1931,9 @@ lbool Solver::solve_()
         status = search(init);
     VSIDS = true;
     mab_select[int(VSIDS)]++;
+    for(int i = 0; i < mab_chosen.size(); i++){
+        mab_chosen[i] = false;
+    }
     // Search:
     int curr_restarts = 0;
     while (status == l_Undef /*&& withinBudget()*/&& !asynch_interrupt){
