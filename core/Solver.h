@@ -443,6 +443,7 @@ public:
     unsigned mab_heuristics = 2; //分支启发式策略的个数
     vec<bool> mab_chosen;
     void restart_mab();
+    void init_mab();
 };
 
 

@@ -1856,6 +1856,19 @@ void sleep(int time)
 static void SIGALRM_switch(int signum) { switch_mode = true; }
 #endif
 
+void Solver::init_mab(){
+    //mab
+    mab_reward[0] = 0;
+    mab_reward[1] = 0;
+    mab_select[0] = 0;
+    mab_select[1] = 0;
+    mab_decisions = 0; //论文中的奖励函数中的desicions_t
+    mab_chosen_tot = 0; //论文中的奖励函数中的decidedVars_t
+    for(int i = 0; i < mab_chosen.size(); i++){
+        mab_chosen[i] = false;
+    }
+}
+
 void Solver::restart_mab(){
     unsigned restarts = 0; //论文中的t
     mab_reward[VSIDS] += !mab_chosen_tot ? 0 : log2(mab_decisions) / mab_chosen_tot;
@@ -1931,9 +1944,7 @@ lbool Solver::solve_()
         status = search(init);
     VSIDS = false;
     mab_select[int(VSIDS)]++;
-    for(int i = 0; i < mab_chosen.size(); i++){
-        mab_chosen[i] = false;
-    }
+    init_mab();
     // Search:
     int curr_restarts = 0;
     while (status == l_Undef /*&& withinBudget()*/&& !asynch_interrupt){
