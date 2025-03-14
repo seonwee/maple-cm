@@ -1929,7 +1929,7 @@ lbool Solver::solve_()
     int init = 10000;
     while (status == l_Undef && init > 0 /*&& withinBudget()*/)
         status = search(init);
-    VSIDS = true;
+    VSIDS = false;
     mab_select[int(VSIDS)]++;
     for(int i = 0; i < mab_chosen.size(); i++){
         mab_chosen[i] = false;
