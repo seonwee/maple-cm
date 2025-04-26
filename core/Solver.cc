@@ -1878,8 +1878,6 @@ void Solver::restart_mab(){
 	mab_chosen_tot = 0;
 	mab_decisions = 0;
 	for(unsigned i = 0; i < mab_heuristics; i++) restarts +=  mab_select[i];
-    // printf("c restarts: %ld %ld\n",restarts,starts);
-    // bool pre_heuristic = VSIDS;
 	if(restarts < mab_heuristics) {
 		VSIDS = VSIDS == false ? true : false; 
 	}else{
@@ -1889,16 +1887,8 @@ void Solver::restart_mab(){
 		     ucb[i] = mab_reward[i] / double(mab_select[i]) + sqrt(mabc * log(restarts+1) / double(mab_select[i]));
 		     if(i != 0 && ucb[i] > ucb[int(VSIDS)]) VSIDS = bool(i);
 		}
-        // printf("c reward: %lf %lf\n",ucb[0],ucb[1]);
 	}
 	mab_select[VSIDS]++;
-    // if(pre_heuristic != VSIDS){
-    //     if(pre_heuristic){
-    //         printf("c VSIDS -> LRB\n");
-    //     }else{
-    //         printf("c LRB -> VSIDS\n");
-    //     }
-    // }
 }
 // NOTE: assumptions passed in member-variable 'assumptions'.
 lbool Solver::solve_()
@@ -1957,17 +1947,6 @@ lbool Solver::solve_()
             status = search(nof_conflicts);
         }
         restart_mab();
-//         if (!VSIDS && switch_mode){
-//             VSIDS = true;
-//             printf("c Switched to VSIDS.\n");
-//             fflush(stdout);
-//             picked.clear();
-//             conflicted.clear();
-//             almost_conflicted.clear();
-// #ifdef ANTI_EXPLORATION
-//             canceled.clear();
-// #endif
-//         }
     }
     
     if (verbosity >= 1)
