@@ -77,8 +77,9 @@ void printStats(Solver& solver)
 	printf("c nbSimplifyAll         : %d\n", solver.nbSimplifyAll);
 	printf("c s_propagations        : %-12"PRIu64"\n", solver.s_propagations);
 	printf("c s_cost_ratio          : %4.2f%%\n", solver.s_propagations * 100 / (double)solver.propagations);
-    printf("c lrb : %ld vsids: %ld\n",solver.mab_select[0],solver.mab_select[1]);
-
+    printf("c current branch mode : %s\n", solver.VSIDS ? "VSIDS" : "LRB");
+    printf("c lrbSelect : %ld vsidsSelect: %ld\n",solver.mab_select[0],solver.mab_select[1]);
+    printf("c lrbReward : %lf vsidsReward: %lf\n",solver.mab_reward[0],solver.mab_reward[1]);
 }
 #endif
 
