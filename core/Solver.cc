@@ -1673,7 +1673,7 @@ lbool Solver::search(int& nof_conflicts)
             }else
                 if (step_size > min_step_size) step_size -= step_size_dec;
             
-            conflicts++; nof_conflicts--;
+            conflicts++; nof_conflicts--;mab_conflicts++;
             if (conflicts == 100000 && learnts_core.size() < 100) core_lbd_cut = 5;
             if (decisionLevel() == 0) return l_False;
             
@@ -1864,6 +1864,7 @@ void Solver::init_mab(){
     mab_select[1] = 0;
     mab_decisions = 0; //论文中的奖励函数中的desicions_t
     mab_chosen_tot = 0; //论文中的奖励函数中的decidedVars_t
+    mab_conflicts = 0;
     for(int i = 0; i < mab_chosen.size(); i++){
         mab_chosen[i] = false;
     }
@@ -1871,12 +1872,13 @@ void Solver::init_mab(){
 
 void Solver::restart_mab(){
     unsigned restarts = 0; //论文中的t
-    mab_reward[VSIDS] += !mab_chosen_tot ? 0 : log2(mab_decisions) / mab_chosen_tot;
+    mab_reward[VSIDS] += log2(mab_decisions)/log2(mab_conflicts);
     for(int i = 0; i < mab_chosen.size(); i++){
         mab_chosen[i] = false;
     }
 	mab_chosen_tot = 0;
 	mab_decisions = 0;
+    mab_conflicts = 0;
 	for(unsigned i = 0; i < mab_heuristics; i++) restarts +=  mab_select[i];
 	if(restarts < mab_heuristics) {
 		VSIDS = VSIDS == false ? true : false; 

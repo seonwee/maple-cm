@@ -442,6 +442,7 @@ public:
     unsigned mab_chosen_tot = 0; //论文中的奖励函数中的decidedVars_t
     unsigned mab_heuristics = 2; //分支启发式策略的个数
     vec<bool> mab_chosen;
+    unsigned mab_conflicts = 0;
     void restart_mab();
     void init_mab();
 };
