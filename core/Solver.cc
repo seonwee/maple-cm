@@ -672,6 +672,12 @@ bool Solver::simplifyAll()
     // printf("c size_reduce_ratio     : %4.2f%%\n",
     //        original_length_record == 0 ? 0 : (original_length_record - simplified_length_record) * 100 / (double)original_length_record);
     
+    vivification_ratio = original_length_record == 0 ? 0 : (original_length_record - simplified_length_record) / (double)original_length_record;
+    printf("c vivification_ratio     : %4.2f%%\n",
+           vivification_ratio * 100);
+    vivification_ratio_total += vivification_ratio;
+    if(conflicts >= 10000 && vivification_ratio <= 0.08 && vivification_ratio > 0)
+        isVivification = true;
     return true;
 }
 
@@ -1869,6 +1875,18 @@ void Solver::init_mab(){
         mab_chosen[i] = false;
     }
 }
+// 奖励补偿
+void Solver::mab_reward_compensation(){
+    if(isVivification){
+        double lrb_reward = mab_reward[0] / (double)mab_select[0];
+        double vsids_reward = mab_reward[1] / (double)mab_select[1];
+        if(lrb_reward >= vsids_reward){
+            isVivification = false;
+            mab_reward[0] *= 1.05;
+            nbRewardCompensation++;
+        }
+    }
+}
 
 void Solver::restart_mab(){
     unsigned restarts = 0; //论文中的t
@@ -1883,6 +1901,7 @@ void Solver::restart_mab(){
 	if(restarts < mab_heuristics) {
 		VSIDS = VSIDS == false ? true : false; 
 	}else{
+        mab_reward_compensation();
 		double ucb[2];
 		VSIDS = false;
 		for(unsigned i = 0; i < mab_heuristics; i++) {
