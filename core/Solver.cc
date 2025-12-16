@@ -1192,7 +1192,7 @@ void Solver::analyze(CRef confl, vec<Lit>& out_learnt, int& out_btlevel, int& ou
             
             if (!seen[var(q)] && level(var(q)) > 0){
                 // impove phase saving
-                participated_phase_saving[toInt(q)]++;
+                participated_phase_saving[toInt(~q)]++;
                 //
                 if (VSIDS){
                     varBumpActivity(var(q), .5);
