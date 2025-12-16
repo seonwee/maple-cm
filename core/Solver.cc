@@ -1042,11 +1042,12 @@ void Solver::cancelUntil(int level) {
 #endif
             }
             // improve phase saving
-            uint32_t interval = conflicts - assigned_phase_saving[c];
+            int lit_int = toInt(trail[c]);
+            uint32_t interval = conflicts - assigned_phase_saving[lit_int];
             if( interval > 0 ){
-                double new_r = ((double) participated_phase_saving[c]) / ((double) interval);
-                double old_r = mab_reward_phase_saving[c];
-                mab_reward_phase_saving[c] = (1.0 - alpha_phase_saving) * old_r + alpha_phase_saving * new_r;
+                double new_r = ((double) participated_phase_saving[lit_int]) / ((double) interval);
+                double old_r = mab_reward_phase_saving[lit_int];
+                mab_reward_phase_saving[lit_int] = (1.0 - alpha_phase_saving) * old_r + alpha_phase_saving * new_r;
             }
             //
             assigns [x] = l_Undef;
