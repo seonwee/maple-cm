@@ -89,6 +89,7 @@ Solver::Solver() :
     //
     drup_file        (NULL)
   , verbosity        (0)
+  , alpha_phase_saving(opt_step_size) // improve phase saving
   , step_size        (opt_step_size)
   , step_size_dec    (opt_step_size_dec)
   , min_step_size    (opt_min_step_size)
@@ -876,7 +877,14 @@ Var Solver::newVar(bool sign, bool dvar)
     vardata  .push(mkVarData(CRef_Undef, 0));
     activity_CHB  .push(0);
     activity_VSIDS.push(rnd_init_act ? drand(random_seed) * 0.00001 : 0);
-    
+    // imporve phase saving
+    mab_reward_phase_saving.push(0); 
+    mab_reward_phase_saving.push(0); 
+    assigned_phase_saving.push(0);
+    assigned_phase_saving.push(0);
+    participated_phase_saving.push(0); 
+    participated_phase_saving.push(0);
+    // imporve phase saving
     picked.push(0);
     conflicted.push(0);
     almost_conflicted.push(0);
@@ -1033,7 +1041,14 @@ void Solver::cancelUntil(int level) {
                 canceled[x] = conflicts;
 #endif
             }
-            
+            // improve phase saving
+            uint32_t interval = conflicts - assigned_phase_saving[c];
+            if( interval > 0 ){
+                double new_r = ((double) participated_phase_saving[c]) / ((double) interval);
+                double old_r = mab_reward_phase_saving[c];
+                mab_reward_phase_saving[c] = (1.0 - alpha_phase_saving) * old_r + alpha_phase_saving * new_r;
+            }
+            //
             assigns [x] = l_Undef;
             if (phase_saving > 1 || (phase_saving == 1) && c > trail_lim.last())
                 polarity[x] = sign(trail[c]);
@@ -1081,8 +1096,17 @@ Lit Solver::pickBranchLit()
 #endif
             next = order_heap.removeMin();
         }
-    
-    return mkLit(next, polarity[next]);
+    // improve phase saving
+    bool v = polarity[next];
+    if(conflicts > 10000){
+        Lit lit = mkLit(next, true);
+        if(mab_reward_phase_saving[toInt(lit)] > mab_reward_phase_saving[toInt(~lit)])
+            v = true;
+        else
+            v = false;
+    }
+    //
+    return mkLit(next, v);
 }
 
 
@@ -1166,6 +1190,9 @@ void Solver::analyze(CRef confl, vec<Lit>& out_learnt, int& out_btlevel, int& ou
             Lit q = c[j];
             
             if (!seen[var(q)] && level(var(q)) > 0){
+                // impove phase saving
+                participated_phase_saving[toInt(q)]++;
+                //
                 if (VSIDS){
                     varBumpActivity(var(q), .5);
                     add_tmp.push(q);
@@ -1403,7 +1430,11 @@ void Solver::uncheckedEnqueue(Lit p, CRef from)
         }
 #endif
     }
-    
+    // improve phase saving
+    int l = toInt(p);
+    assigned_phase_saving[l] = conflicts;
+    participated_phase_saving[l] = 0;
+    //
     assigns[x] = lbool(!sign(p));
     vardata[x] = mkVarData(from, decisionLevel());
     trail.push_(p);
@@ -1672,7 +1703,10 @@ lbool Solver::search(int& nof_conflicts)
                 if (--timer == 0 && var_decay < 0.95) timer = 5000, var_decay += 0.01;
             }else
                 if (step_size > min_step_size) step_size -= step_size_dec;
-            
+            // imporve phase saving
+            if(alpha_phase_saving > min_step_size)
+                alpha_phase_saving -= step_size_dec;
+            //
             conflicts++; nof_conflicts--;
             if (conflicts == 100000 && learnts_core.size() < 100) core_lbd_cut = 5;
             if (decisionLevel() == 0) return l_False;

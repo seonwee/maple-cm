@@ -165,6 +165,7 @@ public:
     FILE*     drup_file;
     int       verbosity;
     double    step_size;
+    double    alpha_phase_saving; // improve phase saving
     double    step_size_dec;
     double    min_step_size;
     int       timer;
@@ -191,7 +192,10 @@ public:
     //
     uint64_t solves, starts, decisions, rnd_decisions, propagations, conflicts, conflicts_VSIDS;
     uint64_t dec_vars, clauses_literals, learnts_literals, max_literals, tot_literals;
-
+    // improve phase saving
+    vec<uint32_t> assigned_phase_saving;
+    vec<uint32_t> participated_phase_saving;
+    //
     vec<uint32_t> picked;
     vec<uint32_t> conflicted;
     vec<uint32_t> almost_conflicted;
@@ -237,6 +241,7 @@ protected:
     double              cla_inc;          // Amount to bump next clause with.
     vec<double>         activity_CHB,     // A heuristic measurement of the activity of a variable.
                         activity_VSIDS;
+    vec<double>         mab_reward_phase_saving; // improve phase saving
     double              var_inc;          // Amount to bump next variable with.
     OccLists<Lit, vec<Watcher>, WatcherDeleted>
                         watches_bin,      // Watches for binary clauses only.
